@@ -1,0 +1,1 @@
+# namek-core
