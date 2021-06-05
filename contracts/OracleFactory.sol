@@ -2,9 +2,10 @@
 pragma solidity =0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
 import "./interfaces/IOracleFactory.sol";
+import "./utils/Ownable.sol";
+
 import "./Oracle.sol";
 
 /// @title Canonical Lender factory
@@ -13,7 +14,7 @@ contract OracleFactory is IOracleFactory, Ownable {
     // Stable coin token.
     address public _stable;
 
-    constructor(address stable) {
+    constructor(address owner, address stable) Ownable(owner) {
         _stable = stable;
     }
 

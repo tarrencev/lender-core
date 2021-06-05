@@ -153,6 +153,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OracleFactory__factory>;
     getContractFactory(
+      name: "Staker",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Staker__factory>;
+    getContractFactory(
       name: "CollateralFake",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.CollateralFake__factory>;
@@ -164,6 +168,10 @@ declare module "hardhat/types/runtime" {
       name: "TestCallee",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.TestCallee__factory>;
+    getContractFactory(
+      name: "Ownable",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.Ownable__factory>;
 
     // default types
     getContractFactory(

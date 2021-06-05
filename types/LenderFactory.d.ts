@@ -21,19 +21,25 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface LenderFactoryInterface extends ethers.utils.Interface {
   functions: {
-    "ISSUER_ROLE()": FunctionFragment;
+    "_owner()": FunctionFragment;
+    "_pendingOwner()": FunctionFragment;
     "_stable()": FunctionFragment;
+    "acceptOwner()": FunctionFragment;
     "deploy(address,address,uint256,uint256,uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
+    "setOwner(address)": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "ISSUER_ROLE",
+    functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "_stable", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwner",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "deploy",
     values: [
@@ -46,36 +52,23 @@ interface LenderFactoryInterface extends ethers.utils.Interface {
     ]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
+  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
 
+  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "ISSUER_ROLE",
+    functionFragment: "_pendingOwner",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "_stable", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
 
-  events: {
-    "OwnershipTransferred(address,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  events: {};
 }
 
 export class LenderFactory extends BaseContract {
@@ -122,9 +115,15 @@ export class LenderFactory extends BaseContract {
   interface: LenderFactoryInterface;
 
   functions: {
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+    _owner(overrides?: CallOverrides): Promise<[string]>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
 
     _stable(overrides?: CallOverrides): Promise<[string]>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     deploy(
       collateral: string,
@@ -138,19 +137,21 @@ export class LenderFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
-  ISSUER_ROLE(overrides?: CallOverrides): Promise<string>;
+  _owner(overrides?: CallOverrides): Promise<string>;
+
+  _pendingOwner(overrides?: CallOverrides): Promise<string>;
 
   _stable(overrides?: CallOverrides): Promise<string>;
+
+  acceptOwner(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   deploy(
     collateral: string,
@@ -164,19 +165,19 @@ export class LenderFactory extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  renounceOwnership(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
+  setOwner(
+    owner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<string>;
+    _owner(overrides?: CallOverrides): Promise<string>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<string>;
 
     _stable(overrides?: CallOverrides): Promise<string>;
+
+    acceptOwner(overrides?: CallOverrides): Promise<void>;
 
     deploy(
       collateral: string,
@@ -190,28 +191,21 @@ export class LenderFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
   };
 
-  filters: {
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
-    >;
-  };
+  filters: {};
 
   estimateGas: {
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+    _owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
 
     _stable(overrides?: CallOverrides): Promise<BigNumber>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     deploy(
       collateral: string,
@@ -225,20 +219,22 @@ export class LenderFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _stable(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     deploy(
       collateral: string,
@@ -252,12 +248,8 @@ export class LenderFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

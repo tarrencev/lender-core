@@ -21,42 +21,44 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface OracleFactoryInterface extends ethers.utils.Interface {
   functions: {
+    "_owner()": FunctionFragment;
+    "_pendingOwner()": FunctionFragment;
     "_stable()": FunctionFragment;
+    "acceptOwner()": FunctionFragment;
     "deploy(address)": FunctionFragment;
     "owner()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
+    "setOwner(address)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "_stable", values?: undefined): string;
-  encodeFunctionData(functionFragment: "deploy", values: [string]): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
+    functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "_stable", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
+    functionFragment: "acceptOwner",
+    values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "deploy", values: [string]): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
 
+  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_pendingOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_stable", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
 
-  events: {
-    "OwnershipTransferred(address,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  events: {};
 }
 
 export class OracleFactory extends BaseContract {
@@ -103,7 +105,15 @@ export class OracleFactory extends BaseContract {
   interface: OracleFactoryInterface;
 
   functions: {
+    _owner(overrides?: CallOverrides): Promise<[string]>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
+
     _stable(overrides?: CallOverrides): Promise<[string]>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     deploy(
       token: string,
@@ -112,17 +122,21 @@ export class OracleFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
+  _owner(overrides?: CallOverrides): Promise<string>;
+
+  _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
   _stable(overrides?: CallOverrides): Promise<string>;
+
+  acceptOwner(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   deploy(
     token: string,
@@ -131,42 +145,39 @@ export class OracleFactory extends BaseContract {
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  renounceOwnership(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
+  setOwner(
+    owner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    _owner(overrides?: CallOverrides): Promise<string>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
     _stable(overrides?: CallOverrides): Promise<string>;
+
+    acceptOwner(overrides?: CallOverrides): Promise<void>;
 
     deploy(token: string, overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
   };
 
-  filters: {
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
-    >;
-  };
+  filters: {};
 
   estimateGas: {
+    _owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
+
     _stable(overrides?: CallOverrides): Promise<BigNumber>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     deploy(
       token: string,
@@ -175,18 +186,22 @@ export class OracleFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _stable(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     deploy(
       token: string,
@@ -195,12 +210,8 @@ export class OracleFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

@@ -4,7 +4,7 @@ pragma solidity =0.7.6;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
@@ -14,10 +14,10 @@ import "./interfaces/INUSD.sol";
 import "./interfaces/IOracle.sol";
 
 import "./libraries/CollateralMath.sol";
+import "./utils/Ownable.sol";
 
-import "hardhat/console.sol";
-
-contract Lender is Ownable {
+/// @title Collateralized lender.
+contract Lender is Ownable, ReentrancyGuard {
     using LowGasSafeMath for uint256;
     using CollateralMath for uint256;
     using SafeERC20 for IERC20;
@@ -59,7 +59,6 @@ contract Lender is Ownable {
     mapping(address => Position) public _positions;
 
     constructor(
-        address owner,
         address collateral,
         address nusd,
         address oracle,
@@ -67,7 +66,7 @@ contract Lender is Ownable {
         uint256 minDebt,
         uint256 minPositionCollateralizationRatio,
         uint256 minSystemCollateralizationRatio
-    ) {
+    ) Ownable(msg.sender) {
         _collateral = IERC20(collateral);
         _nusd = INUSD(nusd);
         _oracle = IOracle(oracle);
@@ -76,14 +75,12 @@ contract Lender is Ownable {
         _minDebt = minDebt;
         _minPositionCollateralizationRatio = minPositionCollateralizationRatio;
         _minSystemCollateralizationRatio = minSystemCollateralizationRatio;
-
-        transferOwnership(owner);
     }
 
     /// @notice Update a position.
     /// @param collDelta The collateral delta to apply to the position.
     /// @param debtDelta The debt delta to apply to the position.
-    function update(int256 collDelta, int256 debtDelta) external {
+    function update(int256 collDelta, int256 debtDelta) external nonReentrant {
         require(collDelta != 0 || debtDelta != 0, "noop update");
 
         (uint256 coll, uint256 debt) = positionOf(msg.sender);
@@ -134,7 +131,7 @@ contract Lender is Ownable {
 
     /// @notice Liquidate a position.
     /// @param owner The position owner.
-    function liquidate(address owner, bytes calldata data) external {
+    function liquidate(address owner, bytes calldata data) external nonReentrant {
         (uint256 coll, uint256 debt) = positionOf(owner);
         require(debt != 0, "position has no debt");
 
@@ -189,7 +186,9 @@ contract Lender is Ownable {
         if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
             // System is in recovery mode.
             return ratio >= _minSystemCollateralizationRatio;
-        } else if (CollateralMath.ratio(_actualColl.add(coll), _actualDebt.add(debt), price) < _minSystemCollateralizationRatio) {
+        } else if (
+            CollateralMath.ratio(_actualColl.add(coll), _actualDebt.add(debt), price) < _minSystemCollateralizationRatio
+        ) {
             // Position would push system under ratio.
             return false;
         }
@@ -202,7 +201,9 @@ contract Lender is Ownable {
     /// @param ratio Positions collateralization ratio.
     /// @return True if the position can be liquidated, else false.
     function isValidLiquidation(uint256 price, uint256 ratio) internal view returns (bool) {
-        return (isRecovering(price) && ratio < _minSystemCollateralizationRatio) || ratio < _minPositionCollateralizationRatio;
+        return
+            (isRecovering(price) && ratio < _minSystemCollateralizationRatio) ||
+            ratio < _minPositionCollateralizationRatio;
     }
 
     /// @notice Checks if the issuer is in recovery mode.
@@ -234,5 +235,11 @@ contract Lender is Ownable {
     /// @param minSystemCollateralizationRatio Minimum system collateralization ratio.
     function setMinSystemCollateralizationRatio(uint256 minSystemCollateralizationRatio) external onlyOwner {
         _minSystemCollateralizationRatio = minSystemCollateralizationRatio;
+    }
+
+    /// @notice Set collateral oracle.
+    /// @param oracle Collateral oracle.
+    function setOracle(address oracle) external onlyOwner {
+        _oracle = IOracle(oracle);
     }
 }

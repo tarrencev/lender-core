@@ -32,17 +32,20 @@ interface LenderInterface extends ethers.utils.Interface {
     "_openedColl()": FunctionFragment;
     "_openedDebt()": FunctionFragment;
     "_oracle()": FunctionFragment;
+    "_owner()": FunctionFragment;
+    "_pendingOwner()": FunctionFragment;
     "_positions(address)": FunctionFragment;
+    "acceptOwner()": FunctionFragment;
     "liquidate(address,bytes)": FunctionFragment;
     "owner()": FunctionFragment;
     "positionOf(address)": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
     "setFee(uint256)": FunctionFragment;
     "setMinDebt(uint256)": FunctionFragment;
     "setMinPositionCollateralizationRatio(uint256)": FunctionFragment;
     "setMinSystemCollateralizationRatio(uint256)": FunctionFragment;
+    "setOracle(address)": FunctionFragment;
+    "setOwner(address)": FunctionFragment;
     "totalCollateralizationRatio(uint256)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
     "update(int256,int256)": FunctionFragment;
   };
 
@@ -78,17 +81,22 @@ interface LenderInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "_oracle", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "_pendingOwner",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "_positions", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwner",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "liquidate",
     values: [string, BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "positionOf", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "renounceOwnership",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "setFee",
     values: [BigNumberish]
@@ -105,13 +113,11 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "setMinSystemCollateralizationRatio",
     values: [BigNumberish]
   ): string;
+  encodeFunctionData(functionFragment: "setOracle", values: [string]): string;
+  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
   encodeFunctionData(
     functionFragment: "totalCollateralizationRatio",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "update",
@@ -150,14 +156,19 @@ interface LenderInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "_oracle", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_pendingOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_positions", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "liquidate", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "positionOf", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setMinDebt", data: BytesLike): Result;
   decodeFunctionResult(
@@ -168,24 +179,20 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "setMinSystemCollateralizationRatio",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setOracle", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalCollateralizationRatio",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "update", data: BytesLike): Result;
 
   events: {
     "Liquidate(address,address)": EventFragment;
-    "OwnershipTransferred(address,address)": EventFragment;
     "Update(address,uint256,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Liquidate"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Update"): EventFragment;
 }
 
@@ -259,10 +266,18 @@ export class Lender extends BaseContract {
 
     _oracle(overrides?: CallOverrides): Promise<[string]>;
 
+    _owner(overrides?: CallOverrides): Promise<[string]>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     liquidate(
       owner: string,
@@ -276,10 +291,6 @@ export class Lender extends BaseContract {
       owner: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     setFee(
       fee: BigNumberish,
@@ -301,15 +312,20 @@ export class Lender extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setOracle(
+      oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setOwner(
+      owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     totalCollateralizationRatio(
       price: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     update(
       collDelta: BigNumberish,
@@ -344,10 +360,18 @@ export class Lender extends BaseContract {
 
   _oracle(overrides?: CallOverrides): Promise<string>;
 
+  _owner(overrides?: CallOverrides): Promise<string>;
+
+  _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
   _positions(
     arg0: string,
     overrides?: CallOverrides
   ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+
+  acceptOwner(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   liquidate(
     owner: string,
@@ -361,10 +385,6 @@ export class Lender extends BaseContract {
     owner: string,
     overrides?: CallOverrides
   ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
-
-  renounceOwnership(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   setFee(
     fee: BigNumberish,
@@ -386,15 +406,20 @@ export class Lender extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setOracle(
+    oracle: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setOwner(
+    owner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   totalCollateralizationRatio(
     price: BigNumberish,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
-
-  transferOwnership(
-    newOwner: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   update(
     collDelta: BigNumberish,
@@ -429,10 +454,16 @@ export class Lender extends BaseContract {
 
     _oracle(overrides?: CallOverrides): Promise<string>;
 
+    _owner(overrides?: CallOverrides): Promise<string>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+
+    acceptOwner(overrides?: CallOverrides): Promise<void>;
 
     liquidate(
       owner: string,
@@ -446,8 +477,6 @@ export class Lender extends BaseContract {
       owner: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
-
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
 
     setFee(fee: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
@@ -463,15 +492,14 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setOracle(oracle: string, overrides?: CallOverrides): Promise<void>;
+
+    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+
     totalCollateralizationRatio(
       price: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     update(
       collDelta: BigNumberish,
@@ -487,14 +515,6 @@ export class Lender extends BaseContract {
     ): TypedEventFilter<
       [string, string],
       { owner: string; liquidator: string }
-    >;
-
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
     >;
 
     Update(
@@ -534,7 +554,15 @@ export class Lender extends BaseContract {
 
     _oracle(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
+
     _positions(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     liquidate(
       owner: string,
@@ -545,10 +573,6 @@ export class Lender extends BaseContract {
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     positionOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     setFee(
       fee: BigNumberish,
@@ -570,14 +594,19 @@ export class Lender extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setOracle(
+      oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setOwner(
+      owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     totalCollateralizationRatio(
       price: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     update(
@@ -614,9 +643,17 @@ export class Lender extends BaseContract {
 
     _oracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     liquidate(
@@ -630,10 +667,6 @@ export class Lender extends BaseContract {
     positionOf(
       owner: string,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    renounceOwnership(
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setFee(
@@ -656,14 +689,19 @@ export class Lender extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setOracle(
+      oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setOwner(
+      owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     totalCollateralizationRatio(
       price: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     update(

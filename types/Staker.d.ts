@@ -19,43 +19,28 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
-interface OwnableInterface extends ethers.utils.Interface {
+interface StakerInterface extends ethers.utils.Interface {
   functions: {
-    "_owner()": FunctionFragment;
-    "_pendingOwner()": FunctionFragment;
-    "acceptOwner()": FunctionFragment;
-    "owner()": FunctionFragment;
-    "setOwner(address)": FunctionFragment;
+    "deposit(address,address)": FunctionFragment;
+    "factory()": FunctionFragment;
+    "pool()": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "_pendingOwner",
-    values?: undefined
+    functionFragment: "deposit",
+    values: [string, string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "acceptOwner",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
+  encodeFunctionData(functionFragment: "factory", values?: undefined): string;
+  encodeFunctionData(functionFragment: "pool", values?: undefined): string;
 
-  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "_pendingOwner",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "acceptOwner",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "deposit", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "factory", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "pool", data: BytesLike): Result;
 
   events: {};
 }
 
-export class Ownable extends BaseContract {
+export class Staker extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -96,85 +81,65 @@ export class Ownable extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: OwnableInterface;
+  interface: StakerInterface;
 
   functions: {
-    _owner(overrides?: CallOverrides): Promise<[string]>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
-
-    acceptOwner(
+    deposit(
+      token0: string,
+      token1: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
+    factory(overrides?: CallOverrides): Promise<[string]>;
 
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    pool(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  _owner(overrides?: CallOverrides): Promise<string>;
-
-  _pendingOwner(overrides?: CallOverrides): Promise<string>;
-
-  acceptOwner(
+  deposit(
+    token0: string,
+    token1: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
+  factory(overrides?: CallOverrides): Promise<string>;
 
-  setOwner(
-    owner: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  pool(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    _owner(overrides?: CallOverrides): Promise<string>;
+    deposit(
+      token0: string,
+      token1: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
-    _pendingOwner(overrides?: CallOverrides): Promise<string>;
+    factory(overrides?: CallOverrides): Promise<string>;
 
-    acceptOwner(overrides?: CallOverrides): Promise<void>;
-
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+    pool(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    _owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    acceptOwner(
+    deposit(
+      token0: string,
+      token1: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
+    factory(overrides?: CallOverrides): Promise<BigNumber>;
 
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
+    pool(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    acceptOwner(
+    deposit(
+      token0: string,
+      token1: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    factory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
+    pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

@@ -21,27 +21,25 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface NUSDInterface extends ethers.utils.Interface {
   functions: {
-    "DEFAULT_ADMIN_ROLE()": FunctionFragment;
     "DOMAIN_SEPARATOR()": FunctionFragment;
-    "ISSUER_ROLE()": FunctionFragment;
+    "_owner()": FunctionFragment;
+    "_pendingOwner()": FunctionFragment;
+    "acceptOwner()": FunctionFragment;
+    "addIssuer(address)": FunctionFragment;
     "allowance(address,address)": FunctionFragment;
     "approve(address,uint256)": FunctionFragment;
     "balanceOf(address)": FunctionFragment;
     "burn(address,uint256)": FunctionFragment;
     "decimals()": FunctionFragment;
     "decreaseAllowance(address,uint256)": FunctionFragment;
-    "getRoleAdmin(bytes32)": FunctionFragment;
-    "getRoleMember(bytes32,uint256)": FunctionFragment;
-    "getRoleMemberCount(bytes32)": FunctionFragment;
-    "grantRole(bytes32,address)": FunctionFragment;
-    "hasRole(bytes32,address)": FunctionFragment;
     "increaseAllowance(address,uint256)": FunctionFragment;
     "mint(address,uint256)": FunctionFragment;
     "name()": FunctionFragment;
     "nonces(address)": FunctionFragment;
+    "owner()": FunctionFragment;
     "permit(address,address,uint256,uint256,uint8,bytes32,bytes32)": FunctionFragment;
-    "renounceRole(bytes32,address)": FunctionFragment;
-    "revokeRole(bytes32,address)": FunctionFragment;
+    "revokeIssuer(address)": FunctionFragment;
+    "setOwner(address)": FunctionFragment;
     "symbol()": FunctionFragment;
     "totalSupply()": FunctionFragment;
     "transfer(address,uint256)": FunctionFragment;
@@ -49,17 +47,19 @@ interface NUSDInterface extends ethers.utils.Interface {
   };
 
   encodeFunctionData(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    values?: undefined
-  ): string;
-  encodeFunctionData(
     functionFragment: "DOMAIN_SEPARATOR",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "ISSUER_ROLE",
+    functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwner",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "addIssuer", values: [string]): string;
   encodeFunctionData(
     functionFragment: "allowance",
     values: [string, string]
@@ -79,26 +79,6 @@ interface NUSDInterface extends ethers.utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "getRoleAdmin",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleMember",
-    values: [BytesLike, BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRoleMemberCount",
-    values: [BytesLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "grantRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "hasRole",
-    values: [BytesLike, string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "increaseAllowance",
     values: [string, BigNumberish]
   ): string;
@@ -108,6 +88,7 @@ interface NUSDInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "nonces", values: [string]): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "permit",
     values: [
@@ -121,13 +102,10 @@ interface NUSDInterface extends ethers.utils.Interface {
     ]
   ): string;
   encodeFunctionData(
-    functionFragment: "renounceRole",
-    values: [BytesLike, string]
+    functionFragment: "revokeIssuer",
+    values: [string]
   ): string;
-  encodeFunctionData(
-    functionFragment: "revokeRole",
-    values: [BytesLike, string]
-  ): string;
+  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -143,17 +121,19 @@ interface NUSDInterface extends ethers.utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "DEFAULT_ADMIN_ROLE",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "DOMAIN_SEPARATOR",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "ISSUER_ROLE",
+    functionFragment: "_pendingOwner",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "addIssuer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
@@ -164,32 +144,19 @@ interface NUSDInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getRoleAdmin",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleMember",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRoleMemberCount",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "grantRole", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "hasRole", data: BytesLike): Result;
-  decodeFunctionResult(
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "mint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "nonces", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "permit", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "renounceRole",
+    functionFragment: "revokeIssuer",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "revokeRole", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -203,16 +170,10 @@ interface NUSDInterface extends ethers.utils.Interface {
 
   events: {
     "Approval(address,address,uint256)": EventFragment;
-    "RoleAdminChanged(bytes32,bytes32,bytes32)": EventFragment;
-    "RoleGranted(bytes32,address,address)": EventFragment;
-    "RoleRevoked(bytes32,address,address)": EventFragment;
     "Transfer(address,address,uint256)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "Approval"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleAdminChanged"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleGranted"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RoleRevoked"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Transfer"): EventFragment;
 }
 
@@ -260,11 +221,20 @@ export class NUSD extends BaseContract {
   interface: NUSDInterface;
 
   functions: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<[string]>;
-
     DOMAIN_SEPARATOR(overrides?: CallOverrides): Promise<[string]>;
 
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<[string]>;
+    _owner(overrides?: CallOverrides): Promise<[string]>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    addIssuer(
+      issuer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     allowance(
       owner: string,
@@ -294,31 +264,6 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<[string]>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<[string]>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<[boolean]>;
-
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -335,6 +280,8 @@ export class NUSD extends BaseContract {
 
     nonces(owner: string, overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    owner(overrides?: CallOverrides): Promise<[string]>;
+
     permit(
       owner: string,
       spender: string,
@@ -346,15 +293,13 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    renounceRole(
-      role: BytesLike,
-      account: string,
+    revokeIssuer(
+      issuer: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    revokeRole(
-      role: BytesLike,
-      account: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -376,11 +321,20 @@ export class NUSD extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
   DOMAIN_SEPARATOR(overrides?: CallOverrides): Promise<string>;
 
-  ISSUER_ROLE(overrides?: CallOverrides): Promise<string>;
+  _owner(overrides?: CallOverrides): Promise<string>;
+
+  _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
+  acceptOwner(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  addIssuer(
+    issuer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   allowance(
     owner: string,
@@ -410,31 +364,6 @@ export class NUSD extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
-
-  getRoleMember(
-    role: BytesLike,
-    index: BigNumberish,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getRoleMemberCount(
-    role: BytesLike,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  grantRole(
-    role: BytesLike,
-    account: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  hasRole(
-    role: BytesLike,
-    account: string,
-    overrides?: CallOverrides
-  ): Promise<boolean>;
-
   increaseAllowance(
     spender: string,
     addedValue: BigNumberish,
@@ -451,6 +380,8 @@ export class NUSD extends BaseContract {
 
   nonces(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+  owner(overrides?: CallOverrides): Promise<string>;
+
   permit(
     owner: string,
     spender: string,
@@ -462,15 +393,13 @@ export class NUSD extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  renounceRole(
-    role: BytesLike,
-    account: string,
+  revokeIssuer(
+    issuer: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  revokeRole(
-    role: BytesLike,
-    account: string,
+  setOwner(
+    owner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -492,11 +421,15 @@ export class NUSD extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<string>;
-
     DOMAIN_SEPARATOR(overrides?: CallOverrides): Promise<string>;
 
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<string>;
+    _owner(overrides?: CallOverrides): Promise<string>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
+    acceptOwner(overrides?: CallOverrides): Promise<void>;
+
+    addIssuer(issuer: string, overrides?: CallOverrides): Promise<void>;
 
     allowance(
       owner: string,
@@ -526,31 +459,6 @@ export class NUSD extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    getRoleAdmin(role: BytesLike, overrides?: CallOverrides): Promise<string>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
-
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -567,6 +475,8 @@ export class NUSD extends BaseContract {
 
     nonces(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    owner(overrides?: CallOverrides): Promise<string>;
+
     permit(
       owner: string,
       spender: string,
@@ -578,17 +488,9 @@ export class NUSD extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    renounceRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    revokeIssuer(issuer: string, overrides?: CallOverrides): Promise<void>;
 
-    revokeRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -618,33 +520,6 @@ export class NUSD extends BaseContract {
       { owner: string; spender: string; value: BigNumber }
     >;
 
-    RoleAdminChanged(
-      role?: BytesLike | null,
-      previousAdminRole?: BytesLike | null,
-      newAdminRole?: BytesLike | null
-    ): TypedEventFilter<
-      [string, string, string],
-      { role: string; previousAdminRole: string; newAdminRole: string }
-    >;
-
-    RoleGranted(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): TypedEventFilter<
-      [string, string, string],
-      { role: string; account: string; sender: string }
-    >;
-
-    RoleRevoked(
-      role?: BytesLike | null,
-      account?: string | null,
-      sender?: string | null
-    ): TypedEventFilter<
-      [string, string, string],
-      { role: string; account: string; sender: string }
-    >;
-
     Transfer(
       from?: string | null,
       to?: string | null,
@@ -656,11 +531,20 @@ export class NUSD extends BaseContract {
   };
 
   estimateGas: {
-    DEFAULT_ADMIN_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
-
     DOMAIN_SEPARATOR(overrides?: CallOverrides): Promise<BigNumber>;
 
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<BigNumber>;
+    _owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    addIssuer(
+      issuer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     allowance(
       owner: string,
@@ -690,34 +574,6 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    getRoleAdmin(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -734,6 +590,8 @@ export class NUSD extends BaseContract {
 
     nonces(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
 
+    owner(overrides?: CallOverrides): Promise<BigNumber>;
+
     permit(
       owner: string,
       spender: string,
@@ -745,15 +603,13 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    renounceRole(
-      role: BytesLike,
-      account: string,
+    revokeIssuer(
+      issuer: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    revokeRole(
-      role: BytesLike,
-      account: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -776,13 +632,20 @@ export class NUSD extends BaseContract {
   };
 
   populateTransaction: {
-    DEFAULT_ADMIN_ROLE(
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     DOMAIN_SEPARATOR(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    ISSUER_ROLE(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    addIssuer(
+      issuer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     allowance(
       owner: string,
@@ -815,34 +678,6 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    getRoleAdmin(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoleMember(
-      role: BytesLike,
-      index: BigNumberish,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getRoleMemberCount(
-      role: BytesLike,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    grantRole(
-      role: BytesLike,
-      account: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    hasRole(
-      role: BytesLike,
-      account: string,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
     increaseAllowance(
       spender: string,
       addedValue: BigNumberish,
@@ -862,6 +697,8 @@ export class NUSD extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     permit(
       owner: string,
       spender: string,
@@ -873,15 +710,13 @@ export class NUSD extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    renounceRole(
-      role: BytesLike,
-      account: string,
+    revokeIssuer(
+      issuer: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    revokeRole(
-      role: BytesLike,
-      account: string,
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

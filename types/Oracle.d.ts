@@ -21,35 +21,39 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface OracleInterface extends ethers.utils.Interface {
   functions: {
+    "_owner()": FunctionFragment;
+    "_pendingOwner()": FunctionFragment;
     "_period()": FunctionFragment;
     "_token()": FunctionFragment;
+    "acceptOwner()": FunctionFragment;
     "observe()": FunctionFragment;
     "owner()": FunctionFragment;
-    "renounceOwnership()": FunctionFragment;
+    "setOwner(address)": FunctionFragment;
     "setPeriod(uint32)": FunctionFragment;
-    "transferOwnership(address)": FunctionFragment;
     "uniswapV3Factory()": FunctionFragment;
     "usdcAddress()": FunctionFragment;
     "wethAddress()": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "_period", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_token", values?: undefined): string;
-  encodeFunctionData(functionFragment: "observe", values?: undefined): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "renounceOwnership",
+    functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "_period", values?: undefined): string;
+  encodeFunctionData(functionFragment: "_token", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "acceptOwner",
+    values?: undefined
+  ): string;
+  encodeFunctionData(functionFragment: "observe", values?: undefined): string;
+  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
   encodeFunctionData(
     functionFragment: "setPeriod",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "transferOwnership",
-    values: [string]
-  ): string;
-  encodeFunctionData(
     functionFragment: "uniswapV3Factory",
     values?: undefined
   ): string;
@@ -62,19 +66,21 @@ interface OracleInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
 
+  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_pendingOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_period", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_token", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "renounceOwnership",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setPeriod", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "transferOwnership",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "uniswapV3Factory",
     data: BytesLike
@@ -88,11 +94,7 @@ interface OracleInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {
-    "OwnershipTransferred(address,address)": EventFragment;
-  };
-
-  getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  events: {};
 }
 
 export class Oracle extends BaseContract {
@@ -139,25 +141,29 @@ export class Oracle extends BaseContract {
   interface: OracleInterface;
 
   functions: {
+    _owner(overrides?: CallOverrides): Promise<[string]>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
+
     _period(overrides?: CallOverrides): Promise<[number]>;
 
     _token(overrides?: CallOverrides): Promise<[string]>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     observe(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
-    renounceOwnership(
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
     setPeriod(
       period: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    transferOwnership(
-      newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -168,25 +174,29 @@ export class Oracle extends BaseContract {
     wethAddress(overrides?: CallOverrides): Promise<[string]>;
   };
 
+  _owner(overrides?: CallOverrides): Promise<string>;
+
+  _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
   _period(overrides?: CallOverrides): Promise<number>;
 
   _token(overrides?: CallOverrides): Promise<string>;
+
+  acceptOwner(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   observe(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
-  renounceOwnership(
+  setOwner(
+    owner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   setPeriod(
     period: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  transferOwnership(
-    newOwner: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -197,22 +207,23 @@ export class Oracle extends BaseContract {
   wethAddress(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
+    _owner(overrides?: CallOverrides): Promise<string>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<string>;
+
     _period(overrides?: CallOverrides): Promise<number>;
 
     _token(overrides?: CallOverrides): Promise<string>;
+
+    acceptOwner(overrides?: CallOverrides): Promise<void>;
 
     observe(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    renounceOwnership(overrides?: CallOverrides): Promise<void>;
+    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
 
     setPeriod(period: BigNumberish, overrides?: CallOverrides): Promise<void>;
-
-    transferOwnership(
-      newOwner: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
 
@@ -221,36 +232,32 @@ export class Oracle extends BaseContract {
     wethAddress(overrides?: CallOverrides): Promise<string>;
   };
 
-  filters: {
-    OwnershipTransferred(
-      previousOwner?: string | null,
-      newOwner?: string | null
-    ): TypedEventFilter<
-      [string, string],
-      { previousOwner: string; newOwner: string }
-    >;
-  };
+  filters: {};
 
   estimateGas: {
+    _owner(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
+
     _period(overrides?: CallOverrides): Promise<BigNumber>;
 
     _token(overrides?: CallOverrides): Promise<BigNumber>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     observe(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    renounceOwnership(
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
     setPeriod(
       period: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    transferOwnership(
-      newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -262,25 +269,29 @@ export class Oracle extends BaseContract {
   };
 
   populateTransaction: {
+    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _period(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    acceptOwner(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     observe(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    renounceOwnership(
+    setOwner(
+      owner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setPeriod(
       period: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    transferOwnership(
-      newOwner: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

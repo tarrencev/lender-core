@@ -1,21 +1,19 @@
 // SPDX-License-Identifier: BUSL-1.1
 pragma solidity =0.7.6;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-
 import "./interfaces/ILenderFactory.sol";
 import "./interfaces/INUSD.sol";
+import "./utils/Ownable.sol";
+
 import "./Lender.sol";
 
 /// @title Canonical Lender factory
 /// @notice Deploys Lenders
 contract LenderFactory is ILenderFactory, Ownable {
-    bytes32 public constant ISSUER_ROLE = keccak256("ISSUER_ROLE");
-
     // Stable coin token.
     INUSD public _stable;
 
-    constructor(address stable) {
+    constructor(address owner, address stable) Ownable(owner) {
         _stable = INUSD(stable);
     }
 
@@ -26,10 +24,9 @@ contract LenderFactory is ILenderFactory, Ownable {
         uint256 minDebt,
         uint256 minPositionCollateralizationRatio,
         uint256 minSystemCollateralizationRatio
-    ) external override returns (address lender) {
-        lender = address(
+    ) external override returns (address) {
+        Lender lender =
             new Lender(
-                owner(),
                 collateral,
                 address(_stable),
                 oracle,
@@ -37,8 +34,8 @@ contract LenderFactory is ILenderFactory, Ownable {
                 minDebt,
                 minPositionCollateralizationRatio,
                 minSystemCollateralizationRatio
-            )
-        );
-        _stable.grantRole(ISSUER_ROLE, lender);
+            );
+        lender.setOwner(owner());
+        return address(lender);
     }
 }

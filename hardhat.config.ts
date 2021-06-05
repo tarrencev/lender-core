@@ -1,85 +1,80 @@
-import { config as dotenvConfig } from "dotenv";
-import { resolve } from "path";
-dotenvConfig({ path: resolve(__dirname, "./.env") });
+import {config as dotenvConfig} from 'dotenv';
+import {resolve} from 'path';
+dotenvConfig({path: resolve(__dirname, './.env')});
 
-import { HardhatUserConfig } from "hardhat/config";
-import { NetworkUserConfig } from "hardhat/types";
+import {HardhatUserConfig} from 'hardhat/types';
 
-import "@nomiclabs/hardhat-truffle5";
-import "@nomiclabs/hardhat-ethers";
-import "solidity-coverage";
-import "hardhat-gas-reporter";
-import "@typechain/hardhat";
+import 'hardhat-deploy';
+import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-truffle5';
+import 'solidity-coverage';
+import 'hardhat-gas-reporter';
+import '@typechain/hardhat';
 
-import chai from "chai";
-import { solidity } from "ethereum-waffle";
+import chai from 'chai';
+import {solidity} from 'ethereum-waffle';
+import {url, accounts} from './utils/network';
 
 chai.use(solidity);
 
-const chainIds = {
-  ganache: 1337,
-  goerli: 5,
-  hardhat: 1337,
-  kovan: 42,
-  mainnet: 1,
-  rinkeby: 4,
-  ropsten: 3,
-};
-
-// Ensure that we have all the environment variables we need.
-let mnemonic: string;
-if (!process.env.MNEMONIC) {
-  throw new Error("Please set your MNEMONIC in a .env file");
-} else {
-  mnemonic = process.env.MNEMONIC;
-}
-
-let infuraApiKey: string;
-if (!process.env.INFURA_API_KEY) {
-  throw new Error("Please set your INFURA_API_KEY in a .env file");
-} else {
-  infuraApiKey = process.env.INFURA_API_KEY;
-}
-
-function createTestnetConfig(network: keyof typeof chainIds): NetworkUserConfig {
-  const url: string = "https://" + network + ".infura.io/v3/" + infuraApiKey;
-  return {
-    accounts: {
-      count: 10,
-      initialIndex: 0,
-      mnemonic,
-      path: "m/44'/60'/0'/0",
-    },
-    chainId: chainIds[network],
-    url,
-  };
-}
-
 const config: HardhatUserConfig = {
-  defaultNetwork: "hardhat",
+  defaultNetwork: 'hardhat',
+  namedAccounts: {
+    deployer: 0,
+  },
   networks: {
     hardhat: {
-      accounts: {
-        mnemonic,
-        count: 1000,
-      },
-      chainId: chainIds.hardhat,
+      // process.env.HARDHAT_FORK will specify the network that the fork is made from.
+      // this line ensure the use of the corresponding accounts
+      accounts: accounts(process.env.HARDHAT_FORK),
+      forking: process.env.HARDHAT_FORK
+        ? {
+            url: url(process.env.HARDHAT_FORK),
+            blockNumber: process.env.HARDHAT_FORK_NUMBER
+              ? parseInt(process.env.HARDHAT_FORK_NUMBER)
+              : undefined,
+          }
+        : undefined,
     },
-    goerli: createTestnetConfig("goerli"),
-    kovan: createTestnetConfig("kovan"),
-    rinkeby: createTestnetConfig("rinkeby"),
-    ropsten: createTestnetConfig("ropsten"),
+    localhost: {
+      url: url('localhost'),
+      accounts: accounts(),
+    },
+    staging: {
+      url: url('rinkeby'),
+      accounts: accounts('rinkeby'),
+    },
+    production: {
+      url: url('mainnet'),
+      accounts: accounts('mainnet'),
+    },
+    mainnet: {
+      url: url('mainnet'),
+      accounts: accounts('mainnet'),
+    },
+    rinkeby: {
+      url: url('rinkeby'),
+      accounts: accounts('rinkeby'),
+    },
+    kovan: {
+      url: url('kovan'),
+      accounts: accounts('kovan'),
+    },
+    goerli: {
+      url: url('goerli'),
+      accounts: accounts('goerli'),
+    },
   },
   paths: {
-    artifacts: "./artifacts",
-    cache: "./cache",
-    sources: "./contracts",
-    tests: "./test",
+    artifacts: './artifacts',
+    cache: './cache',
+    sources: './contracts',
+    tests: './test',
   },
   solidity: {
     compilers: [
       {
-        version: "0.7.6",
+        version: '0.7.6',
         settings: {
           optimizer: {
             enabled: true,
@@ -88,7 +83,7 @@ const config: HardhatUserConfig = {
         },
       },
       {
-        version: "0.5.17",
+        version: '0.5.17',
         settings: {
           optimizer: {
             enabled: true,
@@ -99,14 +94,25 @@ const config: HardhatUserConfig = {
     ],
   },
   gasReporter: {
-    currency: "USD",
+    currency: 'USD',
     gasPrice: 100,
+    enabled: process.env.REPORT_GAS ? true : false,
     coinmarketcap: process.env.COINMARKETCAP,
   },
   typechain: {
-    outDir: "types",
-    target: "ethers-v5",
+    outDir: 'types',
+    target: 'ethers-v5',
   },
+  external: process.env.HARDHAT_FORK
+    ? {
+        deployments: {
+          // process.env.HARDHAT_FORK will specify the network that the fork is made from.
+          // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
+          hardhat: ['deployments/' + process.env.HARDHAT_FORK],
+          localhost: ['deployments/' + process.env.HARDHAT_FORK],
+        },
+      }
+    : undefined,
 };
 
 export default config;
