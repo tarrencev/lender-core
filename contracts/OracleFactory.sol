@@ -4,21 +4,20 @@ pragma solidity =0.7.6;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import "./interfaces/IOracleFactory.sol";
-import "./utils/Ownable.sol";
 
 import "./Oracle.sol";
 
 /// @title Canonical Lender factory
 /// @notice Deploys Lenders
-contract OracleFactory is IOracleFactory, Ownable {
-    // Stable coin token.
-    address public _stable;
+contract OracleFactory is IOracleFactory {
+    /// ethusd oracle.
+    address public _ethusdOracle;
 
-    constructor(address owner, address stable) Ownable(owner) {
-        _stable = stable;
+    constructor(address ethusdOracle) {
+        _ethusdOracle = ethusdOracle;
     }
 
-    function deploy(address token) external override returns (address oracle) {
-        oracle = address(new Oracle(owner(), token));
+    function deploy(address token, uint24 fee) external override returns (address oracle) {
+        oracle = address(new Oracle(msg.sender, _ethusdOracle, token, fee));
     }
 }

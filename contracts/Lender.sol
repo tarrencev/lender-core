@@ -37,6 +37,8 @@ contract Lender is Ownable, ReentrancyGuard {
     INUSD public _nusd;
     // Lender oracle.
     IOracle public _oracle;
+    // Oracle period.
+    uint32 public _period;
 
     // Fee charged to open a position in nUSD.
     uint256 public _fee;
@@ -135,7 +137,7 @@ contract Lender is Ownable, ReentrancyGuard {
         (uint256 coll, uint256 debt) = positionOf(owner);
         require(debt != 0, "position has no debt");
 
-        uint256 price = _oracle.observe();
+        uint256 price = _oracle.observe(_period);
         require(isValidLiquidation(price, CollateralMath.ratio(coll, debt, price)), "invalid liquidation");
 
         _collateral.safeTransfer(msg.sender, coll);
@@ -180,7 +182,7 @@ contract Lender is Ownable, ReentrancyGuard {
     function isValidPosition(uint256 coll, uint256 debt) internal view returns (bool) {
         require(debt >= _minDebt, "less than min debt");
 
-        uint256 price = _oracle.observe();
+        uint256 price = _oracle.observe(_period);
         uint256 ratio = CollateralMath.ratio(coll, debt, price);
 
         if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
@@ -241,5 +243,11 @@ contract Lender is Ownable, ReentrancyGuard {
     /// @param oracle Collateral oracle.
     function setOracle(address oracle) external onlyOwner {
         _oracle = IOracle(oracle);
+    }
+
+    /// @notice Set oracle period.
+    /// @param period Oracle period.
+    function setOraclePeriod(uint32 period) external onlyOwner {
+        _period = period;
     }
 }

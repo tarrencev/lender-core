@@ -34,6 +34,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "_oracle()": FunctionFragment;
     "_owner()": FunctionFragment;
     "_pendingOwner()": FunctionFragment;
+    "_period()": FunctionFragment;
     "_positions(address)": FunctionFragment;
     "acceptOwner()": FunctionFragment;
     "liquidate(address,bytes)": FunctionFragment;
@@ -44,6 +45,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "setMinPositionCollateralizationRatio(uint256)": FunctionFragment;
     "setMinSystemCollateralizationRatio(uint256)": FunctionFragment;
     "setOracle(address)": FunctionFragment;
+    "setOraclePeriod(uint32)": FunctionFragment;
     "setOwner(address)": FunctionFragment;
     "totalCollateralizationRatio(uint256)": FunctionFragment;
     "update(int256,int256)": FunctionFragment;
@@ -86,6 +88,7 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "_period", values?: undefined): string;
   encodeFunctionData(functionFragment: "_positions", values: [string]): string;
   encodeFunctionData(
     functionFragment: "acceptOwner",
@@ -114,6 +117,10 @@ interface LenderInterface extends ethers.utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(functionFragment: "setOracle", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setOraclePeriod",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
   encodeFunctionData(
     functionFragment: "totalCollateralizationRatio",
@@ -161,6 +168,7 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "_pendingOwner",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "_period", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_positions", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "acceptOwner",
@@ -180,6 +188,10 @@ interface LenderInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setOracle", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setOraclePeriod",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalCollateralizationRatio",
@@ -270,6 +282,8 @@ export class Lender extends BaseContract {
 
     _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
 
+    _period(overrides?: CallOverrides): Promise<[number]>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
@@ -314,6 +328,11 @@ export class Lender extends BaseContract {
 
     setOracle(
       oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setOraclePeriod(
+      period: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -364,6 +383,8 @@ export class Lender extends BaseContract {
 
   _pendingOwner(overrides?: CallOverrides): Promise<string>;
 
+  _period(overrides?: CallOverrides): Promise<number>;
+
   _positions(
     arg0: string,
     overrides?: CallOverrides
@@ -408,6 +429,11 @@ export class Lender extends BaseContract {
 
   setOracle(
     oracle: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setOraclePeriod(
+    period: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -458,6 +484,8 @@ export class Lender extends BaseContract {
 
     _pendingOwner(overrides?: CallOverrides): Promise<string>;
 
+    _period(overrides?: CallOverrides): Promise<number>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
@@ -493,6 +521,11 @@ export class Lender extends BaseContract {
     ): Promise<void>;
 
     setOracle(oracle: string, overrides?: CallOverrides): Promise<void>;
+
+    setOraclePeriod(
+      period: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
 
@@ -558,6 +591,8 @@ export class Lender extends BaseContract {
 
     _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _period(overrides?: CallOverrides): Promise<BigNumber>;
+
     _positions(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     acceptOwner(
@@ -596,6 +631,11 @@ export class Lender extends BaseContract {
 
     setOracle(
       oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setOraclePeriod(
+      period: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -647,6 +687,8 @@ export class Lender extends BaseContract {
 
     _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    _period(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     _positions(
       arg0: string,
       overrides?: CallOverrides
@@ -691,6 +733,11 @@ export class Lender extends BaseContract {
 
     setOracle(
       oracle: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setOraclePeriod(
+      period: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

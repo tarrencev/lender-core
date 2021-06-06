@@ -2,29 +2,54 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import { Contract, Signer, utils } from "ethers";
-import { Provider } from "@ethersproject/providers";
+import { Signer, utils, Contract, ContractFactory, Overrides } from "ethers";
+import { Provider, TransactionRequest } from "@ethersproject/providers";
 import type { Ownable, OwnableInterface } from "../Ownable";
 
 const _abi = [
   {
-    anonymous: false,
     inputs: [
       {
-        indexed: true,
         internalType: "address",
-        name: "previousOwner",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "newOwner",
+        name: "owner",
         type: "address",
       },
     ],
-    name: "OwnershipTransferred",
-    type: "event",
+    stateMutability: "nonpayable",
+    type: "constructor",
+  },
+  {
+    inputs: [],
+    name: "_owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "_pendingOwner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "acceptOwner",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
   },
   {
     inputs: [],
@@ -40,28 +65,47 @@ const _abi = [
     type: "function",
   },
   {
-    inputs: [],
-    name: "renounceOwnership",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [
       {
         internalType: "address",
-        name: "newOwner",
+        name: "owner",
         type: "address",
       },
     ],
-    name: "transferOwnership",
+    name: "setOwner",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
 ];
 
-export class Ownable__factory {
+const _bytecode =
+  "0x608060405234801561001057600080fd5b506040516102533803806102538339818101604052602081101561003357600080fd5b5051600080546001600160a01b039092166001600160a01b03199092169190911790556101ee806100656000396000f3fe608060405234801561001057600080fd5b50600436106100575760003560e01c806313af40351461005c5780638da5cb5b14610084578063b2bdfa7b146100a8578063d3b83758146100b0578063ebbc4965146100b8575b600080fd5b6100826004803603602081101561007257600080fd5b50356001600160a01b03166100c0565b005b61008c610129565b604080516001600160a01b039092168252519081900360200190f35b61008c610138565b61008c610147565b610082610156565b6000546001600160a01b03163314610107576040805162461bcd60e51b815260206004820152600560248201526437bbb732b960d91b604482015290519081900360640190fd5b600180546001600160a01b0319166001600160a01b0392909216919091179055565b6000546001600160a01b031690565b6000546001600160a01b031681565b6001546001600160a01b031681565b6001546001600160a01b031633146101a4576040805162461bcd60e51b815260206004820152600c60248201526b3832b73234b733a7bbb732b960a11b604482015290519081900360640190fd5b600080546001600160a01b0319163317905556fea26469706673582212203b82c4583def47ab7c00e1552a66b97714f2a53da9332d4e0b1f77b22fa1835264736f6c63430007060033";
+
+export class Ownable__factory extends ContractFactory {
+  constructor(signer?: Signer) {
+    super(_abi, _bytecode, signer);
+  }
+
+  deploy(
+    owner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<Ownable> {
+    return super.deploy(owner, overrides || {}) as Promise<Ownable>;
+  }
+  getDeployTransaction(
+    owner: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): TransactionRequest {
+    return super.getDeployTransaction(owner, overrides || {});
+  }
+  attach(address: string): Ownable {
+    return super.attach(address) as Ownable;
+  }
+  connect(signer: Signer): Ownable__factory {
+    return super.connect(signer) as Ownable__factory;
+  }
+  static readonly bytecode = _bytecode;
   static readonly abi = _abi;
   static createInterface(): OwnableInterface {
     return new utils.Interface(_abi) as OwnableInterface;

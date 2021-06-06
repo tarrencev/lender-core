@@ -20,10 +20,13 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface IOracleInterface extends ethers.utils.Interface {
   functions: {
-    "observe()": FunctionFragment;
+    "observe(uint32)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "observe", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "observe",
+    values: [BigNumberish]
+  ): string;
 
   decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
 
@@ -74,22 +77,28 @@ export class IOracle extends BaseContract {
   interface: IOracleInterface;
 
   functions: {
-    observe(overrides?: CallOverrides): Promise<[BigNumber]>;
+    observe(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
   };
 
-  observe(overrides?: CallOverrides): Promise<BigNumber>;
+  observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
   callStatic: {
-    observe(overrides?: CallOverrides): Promise<BigNumber>;
+    observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   filters: {};
 
   estimateGas: {
-    observe(overrides?: CallOverrides): Promise<BigNumber>;
+    observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    observe(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    observe(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
   };
 }

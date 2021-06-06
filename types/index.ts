@@ -14,6 +14,7 @@ export type { IUniswapV3PoolEvents } from "./IUniswapV3PoolEvents";
 export type { IUniswapV3PoolImmutables } from "./IUniswapV3PoolImmutables";
 export type { IUniswapV3PoolOwnerActions } from "./IUniswapV3PoolOwnerActions";
 export type { IUniswapV3PoolState } from "./IUniswapV3PoolState";
+export type { ETHUSDOracle } from "./ETHUSDOracle";
 export type { GovernorBravoDelegate } from "./GovernorBravoDelegate";
 export type { GovernorBravoDelegator } from "./GovernorBravoDelegator";
 export type { CompInterface } from "./CompInterface";
@@ -54,6 +55,7 @@ export { IUniswapV3PoolEvents__factory } from "./factories/IUniswapV3PoolEvents_
 export { IUniswapV3PoolImmutables__factory } from "./factories/IUniswapV3PoolImmutables__factory";
 export { IUniswapV3PoolOwnerActions__factory } from "./factories/IUniswapV3PoolOwnerActions__factory";
 export { IUniswapV3PoolState__factory } from "./factories/IUniswapV3PoolState__factory";
+export { ETHUSDOracle__factory } from "./factories/ETHUSDOracle__factory";
 export { GovernorBravoDelegate__factory } from "./factories/GovernorBravoDelegate__factory";
 export { GovernorBravoDelegator__factory } from "./factories/GovernorBravoDelegator__factory";
 export { CompInterface__factory } from "./factories/CompInterface__factory";

@@ -3,5 +3,5 @@
 pragma solidity ^0.7.6;
 
 interface IOracle {
-    function observe() external view returns (uint256);
+    function observe(uint32) external view returns (uint256);
 }

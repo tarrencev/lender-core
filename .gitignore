@@ -15,7 +15,8 @@ node_modules/
 
 .yalc
 yalc.lock
+package-lock.json
 
-contractsInfo.json
+contracts.json
 deployments/hardhat
 deployments/localhost

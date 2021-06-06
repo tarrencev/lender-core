@@ -2,5 +2,5 @@
 pragma solidity =0.7.6;
 
 interface IOracleFactory {
-    function deploy(address token) external returns (address oracle);
+    function deploy(address token, uint24 fee) external returns (address oracle);
 }

@@ -22,12 +22,15 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 interface OracleFakeInterface extends ethers.utils.Interface {
   functions: {
     "_price()": FunctionFragment;
-    "observe()": FunctionFragment;
+    "observe(uint32)": FunctionFragment;
     "set(uint256)": FunctionFragment;
   };
 
   encodeFunctionData(functionFragment: "_price", values?: undefined): string;
-  encodeFunctionData(functionFragment: "observe", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "observe",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(functionFragment: "set", values: [BigNumberish]): string;
 
   decodeFunctionResult(functionFragment: "_price", data: BytesLike): Result;
@@ -83,7 +86,10 @@ export class OracleFake extends BaseContract {
   functions: {
     _price(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    observe(overrides?: CallOverrides): Promise<[BigNumber]>;
+    observe(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
 
     set(
       price: BigNumberish,
@@ -93,7 +99,7 @@ export class OracleFake extends BaseContract {
 
   _price(overrides?: CallOverrides): Promise<BigNumber>;
 
-  observe(overrides?: CallOverrides): Promise<BigNumber>;
+  observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
   set(
     price: BigNumberish,
@@ -103,7 +109,7 @@ export class OracleFake extends BaseContract {
   callStatic: {
     _price(overrides?: CallOverrides): Promise<BigNumber>;
 
-    observe(overrides?: CallOverrides): Promise<BigNumber>;
+    observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
     set(price: BigNumberish, overrides?: CallOverrides): Promise<void>;
   };
@@ -113,7 +119,7 @@ export class OracleFake extends BaseContract {
   estimateGas: {
     _price(overrides?: CallOverrides): Promise<BigNumber>;
 
-    observe(overrides?: CallOverrides): Promise<BigNumber>;
+    observe(arg0: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
     set(
       price: BigNumberish,
@@ -124,7 +130,10 @@ export class OracleFake extends BaseContract {
   populateTransaction: {
     _price(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    observe(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    observe(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
 
     set(
       price: BigNumberish,

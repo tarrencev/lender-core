@@ -11,7 +11,6 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
-  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -19,31 +18,52 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
-interface OracleFactoryInterface extends ethers.utils.Interface {
+interface ETHUSDOracleInterface extends ethers.utils.Interface {
   functions: {
-    "_ethusdOracle()": FunctionFragment;
-    "deploy(address,uint24)": FunctionFragment;
+    "_pool()": FunctionFragment;
+    "observe(uint32)": FunctionFragment;
+    "uniswapV3Factory()": FunctionFragment;
+    "usdcAddress()": FunctionFragment;
+    "wethAddress()": FunctionFragment;
   };
 
+  encodeFunctionData(functionFragment: "_pool", values?: undefined): string;
   encodeFunctionData(
-    functionFragment: "_ethusdOracle",
+    functionFragment: "observe",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "uniswapV3Factory",
     values?: undefined
   ): string;
   encodeFunctionData(
-    functionFragment: "deploy",
-    values: [string, BigNumberish]
+    functionFragment: "usdcAddress",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "wethAddress",
+    values?: undefined
   ): string;
 
+  decodeFunctionResult(functionFragment: "_pool", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "_ethusdOracle",
+    functionFragment: "uniswapV3Factory",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "usdcAddress",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "wethAddress",
+    data: BytesLike
+  ): Result;
 
   events: {};
 }
 
-export class OracleFactory extends BaseContract {
+export class ETHUSDOracle extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -84,55 +104,77 @@ export class OracleFactory extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: OracleFactoryInterface;
+  interface: ETHUSDOracleInterface;
 
   functions: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<[string]>;
+    _pool(overrides?: CallOverrides): Promise<[string]>;
 
-    deploy(
-      token: string,
-      fee: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    observe(
+      period: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    uniswapV3Factory(overrides?: CallOverrides): Promise<[string]>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<[string]>;
+
+    wethAddress(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  _ethusdOracle(overrides?: CallOverrides): Promise<string>;
+  _pool(overrides?: CallOverrides): Promise<string>;
 
-  deploy(
-    token: string,
-    fee: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  observe(period: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
+  uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
+  usdcAddress(overrides?: CallOverrides): Promise<string>;
+
+  wethAddress(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<string>;
+    _pool(overrides?: CallOverrides): Promise<string>;
 
-    deploy(
-      token: string,
-      fee: BigNumberish,
+    observe(
+      period: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<BigNumber>;
+
+    uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<string>;
+
+    wethAddress(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {};
 
   estimateGas: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<BigNumber>;
+    _pool(overrides?: CallOverrides): Promise<BigNumber>;
 
-    deploy(
-      token: string,
-      fee: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    observe(
+      period: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
+
+    uniswapV3Factory(overrides?: CallOverrides): Promise<BigNumber>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<BigNumber>;
+
+    wethAddress(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    _pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    deploy(
-      token: string,
-      fee: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    observe(
+      period: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
+
+    uniswapV3Factory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    wethAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

@@ -8,7 +8,13 @@ import type { IOracle, IOracleInterface } from "../IOracle";
 
 const _abi = [
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "uint32",
+        name: "",
+        type: "uint32",
+      },
+    ],
     name: "observe",
     outputs: [
       {

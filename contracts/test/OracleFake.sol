@@ -11,7 +11,7 @@ contract OracleFake is IOracle {
         _price = price;
     }
 
-    function observe() external view override returns (uint256) {
+    function observe(uint32) external view override returns (uint256) {
         return _price;
     }
 }

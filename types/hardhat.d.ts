@@ -65,6 +65,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IUniswapV3PoolState__factory>;
     getContractFactory(
+      name: "ETHUSDOracle",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ETHUSDOracle__factory>;
+    getContractFactory(
       name: "GovernorBravoDelegate",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.GovernorBravoDelegate__factory>;

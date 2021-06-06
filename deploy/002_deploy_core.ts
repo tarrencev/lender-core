@@ -14,9 +14,15 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
   await nusd.deploy();
 
+  const ethusdOracle = await deterministic('ETHUSDOracle', {
+    from: deployer,
+    log: true,
+  });
+  await ethusdOracle.deploy();
+
   const oracleFactory = await deterministic('OracleFactory', {
     from: deployer,
-    args: [deployer, nusd.address],
+    args: [ethusdOracle.address],
     log: true,
   });
   await oracleFactory.deploy();

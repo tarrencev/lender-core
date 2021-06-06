@@ -21,4 +21,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await lenderFactory.setOwner(timelock.address);
 };
 export default func;
-func.skip = async (hre: HardhatRuntimeEnvironment) => !hre.network.live;
+func.skip = async (hre: HardhatRuntimeEnvironment) => hre.network.live;

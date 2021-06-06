@@ -21,10 +21,13 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface IOracleFactoryInterface extends ethers.utils.Interface {
   functions: {
-    "deploy(address)": FunctionFragment;
+    "deploy(address,uint24)": FunctionFragment;
   };
 
-  encodeFunctionData(functionFragment: "deploy", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "deploy",
+    values: [string, BigNumberish]
+  ): string;
 
   decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
 
@@ -77,17 +80,23 @@ export class IOracleFactory extends BaseContract {
   functions: {
     deploy(
       token: string,
+      fee: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
 
   deploy(
     token: string,
+    fee: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    deploy(token: string, overrides?: CallOverrides): Promise<string>;
+    deploy(
+      token: string,
+      fee: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<string>;
   };
 
   filters: {};
@@ -95,6 +104,7 @@ export class IOracleFactory extends BaseContract {
   estimateGas: {
     deploy(
       token: string,
+      fee: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -102,6 +112,7 @@ export class IOracleFactory extends BaseContract {
   populateTransaction: {
     deploy(
       token: string,
+      fee: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

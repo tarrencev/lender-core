@@ -17,6 +17,11 @@ const _abi = [
         name: "token",
         type: "address",
       },
+      {
+        internalType: "uint24",
+        name: "fee",
+        type: "uint24",
+      },
     ],
     name: "deploy",
     outputs: [
