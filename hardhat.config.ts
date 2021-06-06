@@ -103,16 +103,16 @@ const config: HardhatUserConfig = {
     outDir: 'types',
     target: 'ethers-v5',
   },
-  external: process.env.HARDHAT_FORK
-    ? {
-        deployments: {
+  external: {
+    deployments: process.env.HARDHAT_FORK
+      ? {
           // process.env.HARDHAT_FORK will specify the network that the fork is made from.
           // these lines allow it to fetch the deployments from the network being forked from both for node and deploy task
           hardhat: ['deployments/' + process.env.HARDHAT_FORK],
           localhost: ['deployments/' + process.env.HARDHAT_FORK],
-        },
-      }
-    : undefined,
+        }
+      : undefined,
+  },
 };
 
 export default config;
