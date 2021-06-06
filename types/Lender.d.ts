@@ -24,6 +24,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "_actualColl()": FunctionFragment;
     "_actualDebt()": FunctionFragment;
     "_collateral()": FunctionFragment;
+    "_ethusdOracle()": FunctionFragment;
     "_fee()": FunctionFragment;
     "_minDebt()": FunctionFragment;
     "_minPositionCollateralizationRatio()": FunctionFragment;
@@ -31,13 +32,14 @@ interface LenderInterface extends ethers.utils.Interface {
     "_nusd()": FunctionFragment;
     "_openedColl()": FunctionFragment;
     "_openedDebt()": FunctionFragment;
-    "_oracle()": FunctionFragment;
+    "_oraclePeriod()": FunctionFragment;
+    "_oraclePool()": FunctionFragment;
     "_owner()": FunctionFragment;
     "_pendingOwner()": FunctionFragment;
-    "_period()": FunctionFragment;
     "_positions(address)": FunctionFragment;
     "acceptOwner()": FunctionFragment;
     "liquidate(address,bytes)": FunctionFragment;
+    "observe()": FunctionFragment;
     "owner()": FunctionFragment;
     "positionOf(address)": FunctionFragment;
     "setFee(uint256)": FunctionFragment;
@@ -48,7 +50,9 @@ interface LenderInterface extends ethers.utils.Interface {
     "setOraclePeriod(uint32)": FunctionFragment;
     "setOwner(address)": FunctionFragment;
     "totalCollateralizationRatio(uint256)": FunctionFragment;
+    "uniswapV3Factory()": FunctionFragment;
     "update(int256,int256)": FunctionFragment;
+    "wethAddress()": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -61,6 +65,10 @@ interface LenderInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "_collateral",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_ethusdOracle",
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "_fee", values?: undefined): string;
@@ -82,13 +90,19 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "_openedDebt",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "_oracle", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "_oraclePeriod",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "_oraclePool",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "_pendingOwner",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "_period", values?: undefined): string;
   encodeFunctionData(functionFragment: "_positions", values: [string]): string;
   encodeFunctionData(
     functionFragment: "acceptOwner",
@@ -98,6 +112,7 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "liquidate",
     values: [string, BytesLike]
   ): string;
+  encodeFunctionData(functionFragment: "observe", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(functionFragment: "positionOf", values: [string]): string;
   encodeFunctionData(
@@ -127,8 +142,16 @@ interface LenderInterface extends ethers.utils.Interface {
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
+    functionFragment: "uniswapV3Factory",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "update",
     values: [BigNumberish, BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "wethAddress",
+    values?: undefined
   ): string;
 
   decodeFunctionResult(
@@ -141,6 +164,10 @@ interface LenderInterface extends ethers.utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "_collateral",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_ethusdOracle",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "_fee", data: BytesLike): Result;
@@ -162,19 +189,26 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "_openedDebt",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "_oracle", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "_oraclePeriod",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "_oraclePool",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "_pendingOwner",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "_period", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "_positions", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "acceptOwner",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "liquidate", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "positionOf", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "setFee", data: BytesLike): Result;
@@ -197,7 +231,15 @@ interface LenderInterface extends ethers.utils.Interface {
     functionFragment: "totalCollateralizationRatio",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "uniswapV3Factory",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "update", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "wethAddress",
+    data: BytesLike
+  ): Result;
 
   events: {
     "Liquidate(address,address)": EventFragment;
@@ -258,6 +300,8 @@ export class Lender extends BaseContract {
 
     _collateral(overrides?: CallOverrides): Promise<[string]>;
 
+    _ethusdOracle(overrides?: CallOverrides): Promise<[string]>;
+
     _fee(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     _minDebt(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -276,13 +320,13 @@ export class Lender extends BaseContract {
 
     _openedDebt(overrides?: CallOverrides): Promise<[BigNumber]>;
 
-    _oracle(overrides?: CallOverrides): Promise<[string]>;
+    _oraclePeriod(overrides?: CallOverrides): Promise<[number]>;
+
+    _oraclePool(overrides?: CallOverrides): Promise<[string]>;
 
     _owner(overrides?: CallOverrides): Promise<[string]>;
 
     _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
-
-    _period(overrides?: CallOverrides): Promise<[number]>;
 
     _positions(
       arg0: string,
@@ -298,6 +342,8 @@ export class Lender extends BaseContract {
       data: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    observe(overrides?: CallOverrides): Promise<[BigNumber]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -346,11 +392,15 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
+    uniswapV3Factory(overrides?: CallOverrides): Promise<[string]>;
+
     update(
       collDelta: BigNumberish,
       debtDelta: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    wethAddress(overrides?: CallOverrides): Promise<[string]>;
   };
 
   _actualColl(overrides?: CallOverrides): Promise<BigNumber>;
@@ -358,6 +408,8 @@ export class Lender extends BaseContract {
   _actualDebt(overrides?: CallOverrides): Promise<BigNumber>;
 
   _collateral(overrides?: CallOverrides): Promise<string>;
+
+  _ethusdOracle(overrides?: CallOverrides): Promise<string>;
 
   _fee(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -377,13 +429,13 @@ export class Lender extends BaseContract {
 
   _openedDebt(overrides?: CallOverrides): Promise<BigNumber>;
 
-  _oracle(overrides?: CallOverrides): Promise<string>;
+  _oraclePeriod(overrides?: CallOverrides): Promise<number>;
+
+  _oraclePool(overrides?: CallOverrides): Promise<string>;
 
   _owner(overrides?: CallOverrides): Promise<string>;
 
   _pendingOwner(overrides?: CallOverrides): Promise<string>;
-
-  _period(overrides?: CallOverrides): Promise<number>;
 
   _positions(
     arg0: string,
@@ -399,6 +451,8 @@ export class Lender extends BaseContract {
     data: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  observe(overrides?: CallOverrides): Promise<BigNumber>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -447,11 +501,15 @@ export class Lender extends BaseContract {
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
+  uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
   update(
     collDelta: BigNumberish,
     debtDelta: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  wethAddress(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
     _actualColl(overrides?: CallOverrides): Promise<BigNumber>;
@@ -459,6 +517,8 @@ export class Lender extends BaseContract {
     _actualDebt(overrides?: CallOverrides): Promise<BigNumber>;
 
     _collateral(overrides?: CallOverrides): Promise<string>;
+
+    _ethusdOracle(overrides?: CallOverrides): Promise<string>;
 
     _fee(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -478,13 +538,13 @@ export class Lender extends BaseContract {
 
     _openedDebt(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _oracle(overrides?: CallOverrides): Promise<string>;
+    _oraclePeriod(overrides?: CallOverrides): Promise<number>;
+
+    _oraclePool(overrides?: CallOverrides): Promise<string>;
 
     _owner(overrides?: CallOverrides): Promise<string>;
 
     _pendingOwner(overrides?: CallOverrides): Promise<string>;
-
-    _period(overrides?: CallOverrides): Promise<number>;
 
     _positions(
       arg0: string,
@@ -498,6 +558,8 @@ export class Lender extends BaseContract {
       data: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    observe(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -534,11 +596,15 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
     update(
       collDelta: BigNumberish,
       debtDelta: BigNumberish,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    wethAddress(overrides?: CallOverrides): Promise<string>;
   };
 
   filters: {
@@ -567,6 +633,8 @@ export class Lender extends BaseContract {
 
     _collateral(overrides?: CallOverrides): Promise<BigNumber>;
 
+    _ethusdOracle(overrides?: CallOverrides): Promise<BigNumber>;
+
     _fee(overrides?: CallOverrides): Promise<BigNumber>;
 
     _minDebt(overrides?: CallOverrides): Promise<BigNumber>;
@@ -585,13 +653,13 @@ export class Lender extends BaseContract {
 
     _openedDebt(overrides?: CallOverrides): Promise<BigNumber>;
 
-    _oracle(overrides?: CallOverrides): Promise<BigNumber>;
+    _oraclePeriod(overrides?: CallOverrides): Promise<BigNumber>;
+
+    _oraclePool(overrides?: CallOverrides): Promise<BigNumber>;
 
     _owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _period(overrides?: CallOverrides): Promise<BigNumber>;
 
     _positions(arg0: string, overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -604,6 +672,8 @@ export class Lender extends BaseContract {
       data: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    observe(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -649,11 +719,15 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    uniswapV3Factory(overrides?: CallOverrides): Promise<BigNumber>;
+
     update(
       collDelta: BigNumberish,
       debtDelta: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
+
+    wethAddress(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -662,6 +736,8 @@ export class Lender extends BaseContract {
     _actualDebt(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _collateral(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _ethusdOracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _fee(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -681,13 +757,13 @@ export class Lender extends BaseContract {
 
     _openedDebt(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
-    _oracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    _oraclePeriod(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    _oraclePool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _period(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     _positions(
       arg0: string,
@@ -703,6 +779,8 @@ export class Lender extends BaseContract {
       data: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    observe(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -751,10 +829,14 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    uniswapV3Factory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     update(
       collDelta: BigNumberish,
       debtDelta: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
+
+    wethAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };
 }

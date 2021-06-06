@@ -21,7 +21,7 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface ILenderFactoryInterface extends ethers.utils.Interface {
   functions: {
-    "deploy(address,address,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "deploy(address,address,uint24,uint32,uint256,uint256,uint256,uint256)": FunctionFragment;
   };
 
   encodeFunctionData(
@@ -29,6 +29,8 @@ interface ILenderFactoryInterface extends ethers.utils.Interface {
     values: [
       string,
       string,
+      BigNumberish,
+      BigNumberish,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -88,6 +90,8 @@ export class ILenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -99,6 +103,8 @@ export class ILenderFactory extends BaseContract {
   deploy(
     collateral: string,
     oracle: string,
+    oraclePoolFee: BigNumberish,
+    oraclePeriod: BigNumberish,
     fee: BigNumberish,
     minDebt: BigNumberish,
     minPositionCollateralizationRatio: BigNumberish,
@@ -110,6 +116,8 @@ export class ILenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -124,6 +132,8 @@ export class ILenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -136,6 +146,8 @@ export class ILenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,

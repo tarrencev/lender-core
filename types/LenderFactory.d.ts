@@ -25,7 +25,7 @@ interface LenderFactoryInterface extends ethers.utils.Interface {
     "_pendingOwner()": FunctionFragment;
     "_stable()": FunctionFragment;
     "acceptOwner()": FunctionFragment;
-    "deploy(address,address,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "deploy(address,address,uint24,uint32,uint256,uint256,uint256,uint256)": FunctionFragment;
     "owner()": FunctionFragment;
     "setOwner(address)": FunctionFragment;
   };
@@ -45,6 +45,8 @@ interface LenderFactoryInterface extends ethers.utils.Interface {
     values: [
       string,
       string,
+      BigNumberish,
+      BigNumberish,
       BigNumberish,
       BigNumberish,
       BigNumberish,
@@ -128,6 +130,8 @@ export class LenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -156,6 +160,8 @@ export class LenderFactory extends BaseContract {
   deploy(
     collateral: string,
     oracle: string,
+    oraclePoolFee: BigNumberish,
+    oraclePeriod: BigNumberish,
     fee: BigNumberish,
     minDebt: BigNumberish,
     minPositionCollateralizationRatio: BigNumberish,
@@ -182,6 +188,8 @@ export class LenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -210,6 +218,8 @@ export class LenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,
@@ -239,6 +249,8 @@ export class LenderFactory extends BaseContract {
     deploy(
       collateral: string,
       oracle: string,
+      oraclePoolFee: BigNumberish,
+      oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
       minPositionCollateralizationRatio: BigNumberish,

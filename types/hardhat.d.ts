@@ -65,10 +65,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IUniswapV3PoolState__factory>;
     getContractFactory(
-      name: "ETHUSDOracle",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.ETHUSDOracle__factory>;
-    getContractFactory(
       name: "GovernorBravoDelegate",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.GovernorBravoDelegate__factory>;
@@ -133,10 +129,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IOracle__factory>;
     getContractFactory(
-      name: "IOracleFactory",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IOracleFactory__factory>;
-    getContractFactory(
       name: "Lender",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Lender__factory>;
@@ -152,10 +144,6 @@ declare module "hardhat/types/runtime" {
       name: "Oracle",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.Oracle__factory>;
-    getContractFactory(
-      name: "OracleFactory",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.OracleFactory__factory>;
     getContractFactory(
       name: "Staker",
       signerOrOptions?: ethers.Signer | FactoryOptions

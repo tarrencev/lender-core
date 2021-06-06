@@ -8,6 +8,8 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import "@uniswap/v3-core/contracts/libraries/FullMath.sol";
 import "@uniswap/v3-core/contracts/libraries/LowGasSafeMath.sol";
+import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
+import "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
 import "./interfaces/ILiquidateCallback.sol";
 import "./interfaces/INUSD.sol";
@@ -18,6 +20,9 @@ import "./utils/Ownable.sol";
 
 /// @title Collateralized lender.
 contract Lender is Ownable, ReentrancyGuard {
+    address public constant uniswapV3Factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public constant wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+
     using LowGasSafeMath for uint256;
     using CollateralMath for uint256;
     using SafeERC20 for IERC20;
@@ -36,9 +41,11 @@ contract Lender is Ownable, ReentrancyGuard {
     // Stable coin token.
     INUSD public _nusd;
     // Lender oracle.
-    IOracle public _oracle;
+    IOracle public _ethusdOracle;
+    // UniswapV3 Pool Address;
+    address public _oraclePool;
     // Oracle period.
-    uint32 public _period;
+    uint32 public _oraclePeriod;
 
     // Fee charged to open a position in nUSD.
     uint256 public _fee;
@@ -63,7 +70,9 @@ contract Lender is Ownable, ReentrancyGuard {
     constructor(
         address collateral,
         address nusd,
-        address oracle,
+        address ethusdOracle,
+        uint24 oraclePoolFee,
+        uint32 oraclePeriod,
         uint256 fee,
         uint256 minDebt,
         uint256 minPositionCollateralizationRatio,
@@ -71,7 +80,12 @@ contract Lender is Ownable, ReentrancyGuard {
     ) Ownable(msg.sender) {
         _collateral = IERC20(collateral);
         _nusd = INUSD(nusd);
-        _oracle = IOracle(oracle);
+        _ethusdOracle = IOracle(ethusdOracle);
+        _oraclePeriod = oraclePeriod;
+        _oraclePool = PoolAddress.computeAddress(
+            uniswapV3Factory,
+            PoolAddress.getPoolKey(collateral, wethAddress, oraclePoolFee)
+        );
 
         _fee = fee;
         _minDebt = minDebt;
@@ -137,7 +151,7 @@ contract Lender is Ownable, ReentrancyGuard {
         (uint256 coll, uint256 debt) = positionOf(owner);
         require(debt != 0, "position has no debt");
 
-        uint256 price = _oracle.observe(_period);
+        uint256 price = observe();
         require(isValidLiquidation(price, CollateralMath.ratio(coll, debt, price)), "invalid liquidation");
 
         _collateral.safeTransfer(msg.sender, coll);
@@ -154,6 +168,12 @@ contract Lender is Ownable, ReentrancyGuard {
         _nusd.burn(msg.sender, debt);
 
         emit Liquidate(owner, msg.sender);
+    }
+
+    function observe() public view returns (uint256) {
+        uint128 ethusd = uint128(_ethusdOracle.observe(_oraclePeriod));
+        int24 tick = OracleLibrary.consult(_oraclePool, _oraclePeriod);
+        return OracleLibrary.getQuoteAtTick(tick, ethusd, address(_collateral), wethAddress);
     }
 
     /// @notice Compute the current collateral and debt position by owner.
@@ -182,7 +202,7 @@ contract Lender is Ownable, ReentrancyGuard {
     function isValidPosition(uint256 coll, uint256 debt) internal view returns (bool) {
         require(debt >= _minDebt, "less than min debt");
 
-        uint256 price = _oracle.observe(_period);
+        uint256 price = observe();
         uint256 ratio = CollateralMath.ratio(coll, debt, price);
 
         if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
@@ -242,12 +262,12 @@ contract Lender is Ownable, ReentrancyGuard {
     /// @notice Set collateral oracle.
     /// @param oracle Collateral oracle.
     function setOracle(address oracle) external onlyOwner {
-        _oracle = IOracle(oracle);
+        _ethusdOracle = IOracle(oracle);
     }
 
     /// @notice Set oracle period.
     /// @param period Oracle period.
     function setOraclePeriod(uint32 period) external onlyOwner {
-        _period = period;
+        _oraclePeriod = period;
     }
 }

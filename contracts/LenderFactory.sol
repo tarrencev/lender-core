@@ -20,6 +20,8 @@ contract LenderFactory is ILenderFactory, Ownable {
     function deploy(
         address collateral,
         address oracle,
+        uint24 oraclePoolFee,
+        uint32 oraclePeriod,
         uint256 fee,
         uint256 minDebt,
         uint256 minPositionCollateralizationRatio,
@@ -30,6 +32,8 @@ contract LenderFactory is ILenderFactory, Ownable {
                 collateral,
                 address(_stable),
                 oracle,
+                oraclePoolFee,
+                oraclePeriod,
                 fee,
                 minDebt,
                 minPositionCollateralizationRatio,

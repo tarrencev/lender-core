@@ -1,67 +1,111 @@
-import {ethers} from 'hardhat';
+import {deployments, ethers, getNamedAccounts} from 'hardhat';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import {expect} from 'chai';
 
 import {TestCallee} from '../types/TestCallee';
-import {CollateralFake} from '../types/CollateralFake';
+import {IERC20} from '../types/IERC20';
 import {Lender} from '../types/Lender';
 import {NUSD} from '../types/NUSD';
 import {OracleFake} from '../types/OracleFake';
+import {FeeAmount} from '../utils/constants';
 
 const {constants, utils} = ethers;
 
-const MIN_DEBT = utils.parseUnits('1', 18);
-const MIN_LOAN_COLLATERALIZATION_RATIO = utils.parseUnits('110', 18);
-const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 18);
+const MIN_DEBT = utils.parseUnits('1', 15);
+const MIN_LOAN_COLLATERALIZATION_RATIO = utils.parseUnits('110', 15);
+const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 15);
+const WSTETH = '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0';
 
-describe('Lender.unit', () => {
-  let alice: SignerWithAddress;
-  let bob: SignerWithAddress;
-  let carol: SignerWithAddress;
-  let sudo: SignerWithAddress;
+const setup = deployments.createFixture(async (): Promise<{
+  contracts: {
+    callee: TestCallee;
+    lender: Lender;
+    nusd: NUSD;
+    oracle: OracleFake;
+    stETH: IERC20;
+    wstETH: IERC20;
+  };
+  accounts: {
+    deployer: SignerWithAddress;
+    alice: SignerWithAddress;
+    bob: SignerWithAddress;
+    carol: SignerWithAddress;
+    sudo: SignerWithAddress;
+  };
+}> => {
+  await deployments.fixture(undefined, {
+    keepExistingDeployments: true, // global option to test network like that
+  });
+  const {deployer} = await getNamedAccounts();
+  const stETH = await ethers.getContract('StETH', deployer);
+  const wstETH = await ethers.getContract('WStETH');
 
-  let callee: TestCallee;
-  let collateral: CollateralFake;
-  let lender: Lender;
-  let nusd: NUSD;
-  let oracle: OracleFake;
+  let [sudo, alice, bob, carol] = await ethers.getSigners();
 
-  beforeEach(async () => {
-    [sudo, alice, bob, carol] = await ethers.getSigners();
+  await deployments.deploy('TestCallee', {
+    from: deployer,
+  });
 
-    const calleeFactory = await ethers.getContractFactory('TestCallee');
-    callee = (await calleeFactory.deploy()) as TestCallee;
+  await deployments.deploy('OracleFake', {
+    from: deployer,
+  });
 
-    const collateralFactory = await ethers.getContractFactory('CollateralFake');
-    collateral = (await collateralFactory.deploy(
-      'collateral',
-      'collateral'
-    )) as CollateralFake;
+  const callee = <TestCallee>await ethers.getContract('TestCallee', deployer);
+  const nusd = <NUSD>await ethers.getContract('NUSD', deployer);
+  const oracle = <OracleFake>await ethers.getContract('OracleFake', deployer);
 
-    const nusdFactory = await ethers.getContractFactory('NUSD');
-    nusd = (await nusdFactory.deploy(sudo.address)) as NUSD;
-
-    const oracleFactory = await ethers.getContractFactory('OracleFake');
-    oracle = (await oracleFactory.deploy()) as OracleFake;
-
-    const lenderFactory = await ethers.getContractFactory('Lender');
-    lender = (await lenderFactory.deploy(
-      collateral.address,
+  await deployments.deploy('Lender', {
+    from: deployer,
+    args: [
+      wstETH.address,
       nusd.address,
       oracle.address,
+      FeeAmount.LOW,
+      1,
       0,
       MIN_DEBT,
       MIN_LOAN_COLLATERALIZATION_RATIO,
-      MIN_SYSTEM_COLLATERALIZATION_RATIO
-    )) as Lender;
-
-    await collateral.mint(alice.address, utils.parseUnits('1', 50));
-    await collateral.mint(bob.address, utils.parseUnits('1', 50));
-    await collateral.mint(carol.address, utils.parseUnits('1', 50));
-    await nusd.addIssuer(lender.address);
-    await nusd.addIssuer(sudo.address);
+      MIN_SYSTEM_COLLATERALIZATION_RATIO,
+    ],
   });
 
+  const lender = <Lender>await ethers.getContract('Lender', deployer);
+
+  await nusd.addIssuer(lender.address);
+  await nusd.addIssuer(sudo.address);
+
+  const accounts = {
+    deployer: await ethers.getSigner(deployer),
+    sudo,
+    alice,
+    bob,
+    carol,
+  };
+
+  for (let account of Object.values(accounts)) {
+    await stETH.connect(account).submit(constants.AddressZero, {
+      value: utils.parseUnits('1', 21),
+    });
+    await stETH.connect(account).approve(wstETH.address, constants.MaxUint256);
+    await wstETH.connect(account).approve(lender.address, constants.MaxUint256);
+    const balance = await stETH.balanceOf(account.address);
+    await wstETH.connect(account).wrap(balance);
+  }
+
+  return {
+    contracts: {
+      callee,
+      lender,
+      nusd,
+      oracle,
+      stETH: stETH as IERC20,
+      wstETH: wstETH as IERC20,
+    },
+    accounts,
+  };
+});
+
+describe('Lender.unit', () => {
   describe('opening a position', async () => {
     for (const {name, coll, debt, price, revert} of [
       {
@@ -101,6 +145,11 @@ describe('Lender.unit', () => {
       },
     ]) {
       it(name, async () => {
+        const {
+          contracts: {lender, nusd, oracle, wstETH: collateral},
+          accounts: {alice},
+        } = await setup();
+
         if (coll.gt(0)) {
           await collateral.connect(alice).approve(lender.address, coll);
         }
@@ -126,15 +175,6 @@ describe('Lender.unit', () => {
     const coll = MIN_SYSTEM_COLLATERALIZATION_RATIO;
     const debt = utils.parseUnits('1', 18);
 
-    beforeEach(async () => {
-      const price = utils.parseUnits('1', 18);
-      await collateral
-        .connect(alice)
-        .approve(lender.address, constants.MaxUint256);
-      await oracle.set(price);
-      await lender.connect(alice).update(coll, debt);
-    });
-
     for (const {name, collDelta, debtDelta, price, revert} of [
       {
         name: 'with additonal collateral succeeds',
@@ -156,7 +196,7 @@ describe('Lender.unit', () => {
       },
       {
         name: 'that pushes the system under collateralization ratio reverts',
-        collDelta: constants.NegativeOne,
+        collDelta: MIN_SYSTEM_COLLATERALIZATION_RATIO.div(2).mul(-1),
         debtDelta: constants.Zero,
         price: utils.parseUnits('1', 18),
         revert: 'undercollateralized position',
@@ -170,6 +210,16 @@ describe('Lender.unit', () => {
       },
     ]) {
       it(name, async () => {
+        const {
+          contracts: {lender, nusd, oracle, wstETH: collateral},
+          accounts: {alice},
+        } = await setup();
+
+        // setup
+        await oracle.set(utils.parseUnits('1', 18));
+        await lender.connect(alice).update(coll, debt);
+
+        // test
         await oracle.set(price);
 
         if (revert) {
@@ -196,15 +246,6 @@ describe('Lender.unit', () => {
   });
 
   describe('liquidating a positon', async () => {
-    beforeEach(async () => {
-      await collateral
-        .connect(alice)
-        .approve(lender.address, constants.MaxUint256);
-      await collateral
-        .connect(bob)
-        .approve(lender.address, constants.MaxUint256);
-    });
-
     for (const {name, positions, price, want, revert} of [
       {
         name: 'that is undercollateralized succeeds',
@@ -298,6 +339,11 @@ describe('Lender.unit', () => {
       },
     ]) {
       it(name, async () => {
+        const {
+          contracts: {lender, callee, nusd, oracle, wstETH: collateral},
+          accounts: {alice, bob},
+        } = await setup();
+
         if (positions.alice) {
           await oracle.set(positions.alice.price);
           await lender

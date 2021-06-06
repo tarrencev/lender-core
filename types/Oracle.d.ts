@@ -11,7 +11,6 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
-  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -21,47 +20,24 @@ import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
 interface OracleInterface extends ethers.utils.Interface {
   functions: {
-    "_ethusdOracle()": FunctionFragment;
-    "_owner()": FunctionFragment;
-    "_pendingOwner()": FunctionFragment;
     "_pool()": FunctionFragment;
-    "_token()": FunctionFragment;
-    "acceptOwner()": FunctionFragment;
     "observe(uint32)": FunctionFragment;
-    "owner()": FunctionFragment;
-    "setOwner(address)": FunctionFragment;
-    "setUSDETHOracle(address)": FunctionFragment;
     "uniswapV3Factory()": FunctionFragment;
+    "usdcAddress()": FunctionFragment;
     "wethAddress()": FunctionFragment;
   };
 
-  encodeFunctionData(
-    functionFragment: "_ethusdOracle",
-    values?: undefined
-  ): string;
-  encodeFunctionData(functionFragment: "_owner", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "_pendingOwner",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "_pool", values?: undefined): string;
-  encodeFunctionData(functionFragment: "_token", values?: undefined): string;
-  encodeFunctionData(
-    functionFragment: "acceptOwner",
-    values?: undefined
-  ): string;
   encodeFunctionData(
     functionFragment: "observe",
     values: [BigNumberish]
   ): string;
-  encodeFunctionData(functionFragment: "owner", values?: undefined): string;
-  encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
-  encodeFunctionData(
-    functionFragment: "setUSDETHOracle",
-    values: [string]
-  ): string;
   encodeFunctionData(
     functionFragment: "uniswapV3Factory",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "usdcAddress",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -69,30 +45,14 @@ interface OracleInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
 
-  decodeFunctionResult(
-    functionFragment: "_ethusdOracle",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(functionFragment: "_owner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "_pendingOwner",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "_pool", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "_token", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "acceptOwner",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
-  decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "setUSDETHOracle",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(
     functionFragment: "uniswapV3Factory",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "usdcAddress",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -147,102 +107,41 @@ export class Oracle extends BaseContract {
   interface: OracleInterface;
 
   functions: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<[string]>;
-
-    _owner(overrides?: CallOverrides): Promise<[string]>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<[string]>;
-
     _pool(overrides?: CallOverrides): Promise<[string]>;
-
-    _token(overrides?: CallOverrides): Promise<[string]>;
-
-    acceptOwner(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     observe(
       period: BigNumberish,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    owner(overrides?: CallOverrides): Promise<[string]>;
-
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
-    setUSDETHOracle(
-      ethusdOracle: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
-
     uniswapV3Factory(overrides?: CallOverrides): Promise<[string]>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<[string]>;
 
     wethAddress(overrides?: CallOverrides): Promise<[string]>;
   };
 
-  _ethusdOracle(overrides?: CallOverrides): Promise<string>;
-
-  _owner(overrides?: CallOverrides): Promise<string>;
-
-  _pendingOwner(overrides?: CallOverrides): Promise<string>;
-
   _pool(overrides?: CallOverrides): Promise<string>;
-
-  _token(overrides?: CallOverrides): Promise<string>;
-
-  acceptOwner(
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   observe(period: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
-  owner(overrides?: CallOverrides): Promise<string>;
-
-  setOwner(
-    owner: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
-  setUSDETHOracle(
-    ethusdOracle: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
-
   uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
+  usdcAddress(overrides?: CallOverrides): Promise<string>;
 
   wethAddress(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<string>;
-
-    _owner(overrides?: CallOverrides): Promise<string>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<string>;
-
     _pool(overrides?: CallOverrides): Promise<string>;
-
-    _token(overrides?: CallOverrides): Promise<string>;
-
-    acceptOwner(overrides?: CallOverrides): Promise<void>;
 
     observe(
       period: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<string>;
-
-    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
-
-    setUSDETHOracle(
-      ethusdOracle: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
-
     uniswapV3Factory(overrides?: CallOverrides): Promise<string>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<string>;
 
     wethAddress(overrides?: CallOverrides): Promise<string>;
   };
@@ -250,75 +149,31 @@ export class Oracle extends BaseContract {
   filters: {};
 
   estimateGas: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<BigNumber>;
-
     _pool(overrides?: CallOverrides): Promise<BigNumber>;
-
-    _token(overrides?: CallOverrides): Promise<BigNumber>;
-
-    acceptOwner(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     observe(
       period: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    owner(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
-    setUSDETHOracle(
-      ethusdOracle: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
-
     uniswapV3Factory(overrides?: CallOverrides): Promise<BigNumber>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<BigNumber>;
 
     wethAddress(overrides?: CallOverrides): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    _ethusdOracle(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _pendingOwner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     _pool(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    _token(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    acceptOwner(
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
 
     observe(
       period: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
-    setOwner(
-      owner: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
-    setUSDETHOracle(
-      ethusdOracle: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<PopulatedTransaction>;
-
     uniswapV3Factory(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    usdcAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     wethAddress(overrides?: CallOverrides): Promise<PopulatedTransaction>;
   };

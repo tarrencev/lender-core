@@ -5,6 +5,8 @@ interface ILenderFactory {
     function deploy(
         address collateral,
         address oracle,
+        uint24 oraclePoolFee,
+        uint32 oraclePeriod,
         uint256 fee,
         uint256 minDebt,
         uint256 minPositionCollateralizationRatio,

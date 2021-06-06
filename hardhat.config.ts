@@ -21,6 +21,7 @@ const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
   namedAccounts: {
     deployer: 0,
+    wstethHolder: '0xcd91538b91b4ba7797d39a2f66e63810b50a33d0',
   },
   networks: {
     hardhat: {

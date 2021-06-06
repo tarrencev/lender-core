@@ -23,6 +23,16 @@ const _abi = [
         type: "address",
       },
       {
+        internalType: "uint24",
+        name: "oraclePoolFee",
+        type: "uint24",
+      },
+      {
+        internalType: "uint32",
+        name: "oraclePeriod",
+        type: "uint32",
+      },
+      {
         internalType: "uint256",
         name: "fee",
         type: "uint256",
