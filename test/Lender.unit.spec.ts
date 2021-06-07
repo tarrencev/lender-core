@@ -12,9 +12,8 @@ import {FeeAmount} from '../utils/constants';
 const {constants, utils} = ethers;
 
 const MIN_DEBT = utils.parseUnits('1', 15);
-const MIN_LOAN_COLLATERALIZATION_RATIO = utils.parseUnits('110', 15);
+const MIN_POSITION_COLLATERALIZATION_RATIO = utils.parseUnits('110', 15);
 const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 15);
-const WSTETH = '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0';
 
 const setup = deployments.createFixture(async (): Promise<{
   contracts: {
@@ -64,9 +63,10 @@ const setup = deployments.createFixture(async (): Promise<{
       1,
       0,
       MIN_DEBT,
-      MIN_LOAN_COLLATERALIZATION_RATIO,
+      MIN_POSITION_COLLATERALIZATION_RATIO,
       MIN_SYSTEM_COLLATERALIZATION_RATIO,
     ],
+    log: true,
   });
 
   const lender = <Lender>await ethers.getContract('Lender', deployer);
@@ -111,7 +111,7 @@ describe('Lender.unit', () => {
       {
         name: 'with minimum debt and minimum collateralization succeeds',
         coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-        debt: utils.parseUnits('1', 18),
+        debt: MIN_DEBT,
         price: utils.parseUnits('1', 18),
         revert: undefined,
       },
@@ -124,21 +124,21 @@ describe('Lender.unit', () => {
       },
       {
         name: 'with less than min system collateral ratio for first loan and reverts',
-        coll: MIN_LOAN_COLLATERALIZATION_RATIO,
+        coll: MIN_POSITION_COLLATERALIZATION_RATIO,
         debt: utils.parseUnits('1', 18),
         price: utils.parseUnits('1', 18),
         revert: 'undercollateralized position',
       },
       {
         name: 'with negative collateral and reverts',
-        coll: MIN_LOAN_COLLATERALIZATION_RATIO.mul(-1),
+        coll: MIN_POSITION_COLLATERALIZATION_RATIO.mul(-1),
         debt: utils.parseUnits('1', 18),
         price: utils.parseUnits('1', 18),
         revert: 'LS',
       },
       {
         name: 'with negative debt and reverts',
-        coll: MIN_LOAN_COLLATERALIZATION_RATIO,
+        coll: MIN_POSITION_COLLATERALIZATION_RATIO,
         debt: utils.parseUnits('1', 18).mul(-1),
         price: utils.parseUnits('1', 18),
         revert: 'LS',

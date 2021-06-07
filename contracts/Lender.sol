@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: BUSL-1.1
 
 pragma solidity =0.7.6;
+pragma abicoder v2;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
@@ -30,7 +31,9 @@ contract Lender is Ownable, ReentrancyGuard {
 
     struct Position {
         uint256 debt;
+        uint256 value;
         uint256 coll;
+        uint256 ratio;
     }
 
     event Update(address indexed owner, uint256 coll, uint256 debt);
@@ -96,10 +99,10 @@ contract Lender is Ownable, ReentrancyGuard {
     /// @notice Update a position.
     /// @param collDelta The collateral delta to apply to the position.
     /// @param debtDelta The debt delta to apply to the position.
-    function update(int256 collDelta, int256 debtDelta) external nonReentrant {
+    function update(int256 collDelta, int256 debtDelta) external nonReentrant returns (Position memory) {
         require(collDelta != 0 || debtDelta != 0, "noop update");
 
-        (uint256 coll, uint256 debt) = positionOf(msg.sender);
+        (uint256 coll, uint256 debt) = _positionOf(msg.sender);
 
         uint256 nextColl = coll.addDelta(collDelta);
         uint256 nextDebt = debt.addDelta(debtDelta);
@@ -115,7 +118,7 @@ contract Lender is Ownable, ReentrancyGuard {
             _nusd.burn(msg.sender, uint256(-debtDelta));
             _collateral.safeTransfer(msg.sender, uint256(-collDelta));
             emit Update(msg.sender, 0, 0);
-            return;
+            return Position(0, 0, 0, 0);
         }
 
         // Charge a fee for debt increases.
@@ -126,7 +129,24 @@ contract Lender is Ownable, ReentrancyGuard {
             _nusd.mint(owner(), _fee);
         }
 
-        require(isValidPosition(nextColl, nextDebt), "undercollateralized position");
+        uint256 price = observe();
+        uint256 ratio = CollateralMath.ratio(nextColl, nextDebt, price);
+
+        require(nextDebt >= _minDebt, "less than min debt");
+
+        if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
+            // System is in recovery mode.
+            require(ratio >= _minSystemCollateralizationRatio, "undercollateralized position");
+        } else {
+            // Position would push system under ratio.
+            require(
+                CollateralMath.ratio(_actualColl.add(nextColl), _actualDebt.add(nextDebt), price) >
+                    _minSystemCollateralizationRatio,
+                "undercollateralized system"
+            );
+            require(ratio > _minPositionCollateralizationRatio, "undercollateralized system");
+        }
+
         _positions[msg.sender].coll = nextColl;
         _positions[msg.sender].debt = nextDebt;
 
@@ -143,12 +163,14 @@ contract Lender is Ownable, ReentrancyGuard {
         }
 
         emit Update(msg.sender, nextColl, nextDebt);
+
+        return Position(nextColl, nextColl.mul(price), nextDebt, ratio);
     }
 
     /// @notice Liquidate a position.
     /// @param owner The position owner.
     function liquidate(address owner, bytes calldata data) external nonReentrant {
-        (uint256 coll, uint256 debt) = positionOf(owner);
+        (uint256 coll, uint256 debt) = _positionOf(owner);
         require(debt != 0, "position has no debt");
 
         uint256 price = observe();
@@ -176,16 +198,32 @@ contract Lender is Ownable, ReentrancyGuard {
         return OracleLibrary.getQuoteAtTick(tick, ethusd, address(_collateral), wethAddress);
     }
 
-    /// @notice Compute the current collateral and debt position by owner.
-    /// @param owner The position owner.
+    /// @notice Compute the current collateral, debt, and ratio of a position by owner.
+    /// @param holder The position holder.
+    /// @return position The holders position.
+    function positionOf(address holder) external view returns (Position memory) {
+        if (_positions[holder].coll == 0) {
+            return Position(0, 0, 0, 0);
+        }
+
+        uint256 price = observe();
+        uint256 coll = FullMath.mulDiv(_positions[holder].coll, _actualColl, _openedColl);
+        uint256 value = coll.mul(price);
+        uint256 debt = FullMath.mulDiv(_positions[holder].debt, _actualDebt, _openedDebt);
+        uint256 ratio = CollateralMath.ratio(coll, debt, price);
+        return Position(coll, value, debt, ratio);
+    }
+
+    /// @notice Compute the current collateral and debt position by holder.
+    /// @param holder The position holder.
     /// @return coll The positions collateral balance.
     /// @return debt The positions debt balance.
-    function positionOf(address owner) public view returns (uint256 coll, uint256 debt) {
-        if (_positions[owner].coll == 0) {
+    function _positionOf(address holder) internal view returns (uint256 coll, uint256 debt) {
+        if (_positions[holder].coll == 0) {
             return (0, 0);
         }
-        coll = FullMath.mulDiv(_positions[owner].coll, _actualColl, _openedColl);
-        debt = FullMath.mulDiv(_positions[owner].debt, _actualDebt, _openedDebt);
+        coll = FullMath.mulDiv(_positions[holder].coll, _actualColl, _openedColl);
+        debt = FullMath.mulDiv(_positions[holder].debt, _actualDebt, _openedDebt);
     }
 
     /// @notice Compute the total collateralization ratio of the issuer.
@@ -193,29 +231,6 @@ contract Lender is Ownable, ReentrancyGuard {
     /// @return The total collateralization of the issuer.
     function totalCollateralizationRatio(uint256 price) public view returns (uint256) {
         return CollateralMath.ratio(_actualColl, _actualDebt, price);
-    }
-
-    /// @notice Validates a given position is valid.
-    /// @param coll The position's collateral.
-    /// @param debt The position's debt.
-    /// @return True if the position is valid, else false.
-    function isValidPosition(uint256 coll, uint256 debt) internal view returns (bool) {
-        require(debt >= _minDebt, "less than min debt");
-
-        uint256 price = observe();
-        uint256 ratio = CollateralMath.ratio(coll, debt, price);
-
-        if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
-            // System is in recovery mode.
-            return ratio >= _minSystemCollateralizationRatio;
-        } else if (
-            CollateralMath.ratio(_actualColl.add(coll), _actualDebt.add(debt), price) < _minSystemCollateralizationRatio
-        ) {
-            // Position would push system under ratio.
-            return false;
-        }
-
-        return ratio >= _minPositionCollateralizationRatio;
     }
 
     /// @notice Validates a position's liquidation.

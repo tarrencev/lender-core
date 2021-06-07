@@ -3,21 +3,46 @@ import {HardhatRuntimeEnvironment} from 'hardhat/types';
 import {DeployFunction} from 'hardhat-deploy/types';
 
 import {FeeAmount} from '../utils/constants';
-import {LenderFactory} from '../types/LenderFactory';
+import {NUSD} from '../types/NUSD';
 import {Oracle} from '../types/Oracle';
 
-const {utils} = ethers;
+const {constants, utils} = ethers;
 
 const MIN_DEBT = utils.parseUnits('1', 18);
 const MIN_POSITION_COLLATERALIZATION_RATIO = utils.parseUnits('110', 18);
 const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 18);
-const WSTETH = '0x7f39c581f595b53c5cb19bd0b3f8da6c935e2ca0';
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
-  const {getNamedAccounts} = hre;
+  const {deployments, getNamedAccounts} = hre;
   const {deployer} = await getNamedAccounts();
 
+  const nusd = <NUSD>await ethers.getContract('NUSD', deployer);
+  const stETH = await ethers.getContract('StETH', deployer);
+  const wstETH = await ethers.getContract('WStETH', deployer);
   const oracle = <Oracle>await ethers.getContract('Oracle', deployer);
+
+  await stETH.submit(constants.AddressZero, {
+    value: utils.parseUnits('1', 21),
+  });
+  await stETH.approve(wstETH.address, constants.MaxUint256);
+  const balance = await stETH.balanceOf(deployer);
+  await wstETH.wrap(balance);
+
+  await deployments.deploy('Lender', {
+    from: deployer,
+    args: [
+      wstETH.address,
+      nusd.address,
+      oracle.address,
+      FeeAmount.LOW,
+      1,
+      0,
+      MIN_DEBT,
+      MIN_POSITION_COLLATERALIZATION_RATIO,
+      MIN_SYSTEM_COLLATERALIZATION_RATIO,
+    ],
+    log: true,
+  });
 };
 export default func;
 func.skip = async (hre: HardhatRuntimeEnvironment) => hre.network.live;

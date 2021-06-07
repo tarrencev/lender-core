@@ -331,7 +331,14 @@ export class Lender extends BaseContract {
     _positions(
       arg0: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber] & {
+        debt: BigNumber;
+        value: BigNumber;
+        coll: BigNumber;
+        ratio: BigNumber;
+      }
+    >;
 
     acceptOwner(
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -348,9 +355,18 @@ export class Lender extends BaseContract {
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     positionOf(
-      owner: string,
+      holder: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
+    ): Promise<
+      [
+        [BigNumber, BigNumber, BigNumber, BigNumber] & {
+          debt: BigNumber;
+          value: BigNumber;
+          coll: BigNumber;
+          ratio: BigNumber;
+        }
+      ]
+    >;
 
     setFee(
       fee: BigNumberish,
@@ -440,7 +456,14 @@ export class Lender extends BaseContract {
   _positions(
     arg0: string,
     overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber, BigNumber] & {
+      debt: BigNumber;
+      value: BigNumber;
+      coll: BigNumber;
+      ratio: BigNumber;
+    }
+  >;
 
   acceptOwner(
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -457,9 +480,16 @@ export class Lender extends BaseContract {
   owner(overrides?: CallOverrides): Promise<string>;
 
   positionOf(
-    owner: string,
+    holder: string,
     overrides?: CallOverrides
-  ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber, BigNumber] & {
+      debt: BigNumber;
+      value: BigNumber;
+      coll: BigNumber;
+      ratio: BigNumber;
+    }
+  >;
 
   setFee(
     fee: BigNumberish,
@@ -549,7 +579,14 @@ export class Lender extends BaseContract {
     _positions(
       arg0: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { debt: BigNumber; coll: BigNumber }>;
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber] & {
+        debt: BigNumber;
+        value: BigNumber;
+        coll: BigNumber;
+        ratio: BigNumber;
+      }
+    >;
 
     acceptOwner(overrides?: CallOverrides): Promise<void>;
 
@@ -564,9 +601,16 @@ export class Lender extends BaseContract {
     owner(overrides?: CallOverrides): Promise<string>;
 
     positionOf(
-      owner: string,
+      holder: string,
       overrides?: CallOverrides
-    ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber] & {
+        debt: BigNumber;
+        value: BigNumber;
+        coll: BigNumber;
+        ratio: BigNumber;
+      }
+    >;
 
     setFee(fee: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
@@ -602,7 +646,14 @@ export class Lender extends BaseContract {
       collDelta: BigNumberish,
       debtDelta: BigNumberish,
       overrides?: CallOverrides
-    ): Promise<void>;
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber] & {
+        debt: BigNumber;
+        value: BigNumber;
+        coll: BigNumber;
+        ratio: BigNumber;
+      }
+    >;
 
     wethAddress(overrides?: CallOverrides): Promise<string>;
   };
@@ -677,7 +728,7 @@ export class Lender extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
-    positionOf(owner: string, overrides?: CallOverrides): Promise<BigNumber>;
+    positionOf(holder: string, overrides?: CallOverrides): Promise<BigNumber>;
 
     setFee(
       fee: BigNumberish,
@@ -785,7 +836,7 @@ export class Lender extends BaseContract {
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     positionOf(
-      owner: string,
+      holder: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

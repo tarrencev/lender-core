@@ -27,6 +27,10 @@
     "fork:dev": "node ./_scripts.js fork:dev",
     "fork:test": "node ./_scripts.js fork:test"
   },
+  "files": [
+    "/contracts",
+    "lib/**/*"
+  ],
   "main": "lib/hardhat.config.js",
   "keywords": [],
   "author": "",
