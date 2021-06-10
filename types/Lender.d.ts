@@ -38,6 +38,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "_pendingOwner()": FunctionFragment;
     "_positions(address)": FunctionFragment;
     "acceptOwner()": FunctionFragment;
+    "computePostion(uint256,uint256)": FunctionFragment;
     "liquidate(address,bytes)": FunctionFragment;
     "observe()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -107,6 +108,10 @@ interface LenderInterface extends ethers.utils.Interface {
   encodeFunctionData(
     functionFragment: "acceptOwner",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "computePostion",
+    values: [BigNumberish, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "liquidate",
@@ -205,6 +210,10 @@ interface LenderInterface extends ethers.utils.Interface {
   decodeFunctionResult(functionFragment: "_positions", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "acceptOwner",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "computePostion",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "liquidate", data: BytesLike): Result;
@@ -333,9 +342,9 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        debt: BigNumber;
-        value: BigNumber;
         coll: BigNumber;
+        value: BigNumber;
+        debt: BigNumber;
         ratio: BigNumber;
       }
     >;
@@ -343,6 +352,21 @@ export class Lender extends BaseContract {
     acceptOwner(
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
+
+    computePostion(
+      coll: BigNumberish,
+      debt: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [
+        [BigNumber, BigNumber, BigNumber, BigNumber] & {
+          coll: BigNumber;
+          value: BigNumber;
+          debt: BigNumber;
+          ratio: BigNumber;
+        }
+      ]
+    >;
 
     liquidate(
       owner: string,
@@ -360,9 +384,9 @@ export class Lender extends BaseContract {
     ): Promise<
       [
         [BigNumber, BigNumber, BigNumber, BigNumber] & {
-          debt: BigNumber;
-          value: BigNumber;
           coll: BigNumber;
+          value: BigNumber;
+          debt: BigNumber;
           ratio: BigNumber;
         }
       ]
@@ -458,9 +482,9 @@ export class Lender extends BaseContract {
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber, BigNumber, BigNumber] & {
-      debt: BigNumber;
-      value: BigNumber;
       coll: BigNumber;
+      value: BigNumber;
+      debt: BigNumber;
       ratio: BigNumber;
     }
   >;
@@ -468,6 +492,19 @@ export class Lender extends BaseContract {
   acceptOwner(
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
+
+  computePostion(
+    coll: BigNumberish,
+    debt: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber, BigNumber, BigNumber] & {
+      coll: BigNumber;
+      value: BigNumber;
+      debt: BigNumber;
+      ratio: BigNumber;
+    }
+  >;
 
   liquidate(
     owner: string,
@@ -484,9 +521,9 @@ export class Lender extends BaseContract {
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber, BigNumber, BigNumber] & {
-      debt: BigNumber;
-      value: BigNumber;
       coll: BigNumber;
+      value: BigNumber;
+      debt: BigNumber;
       ratio: BigNumber;
     }
   >;
@@ -581,14 +618,27 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        debt: BigNumber;
-        value: BigNumber;
         coll: BigNumber;
+        value: BigNumber;
+        debt: BigNumber;
         ratio: BigNumber;
       }
     >;
 
     acceptOwner(overrides?: CallOverrides): Promise<void>;
+
+    computePostion(
+      coll: BigNumberish,
+      debt: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber, BigNumber, BigNumber] & {
+        coll: BigNumber;
+        value: BigNumber;
+        debt: BigNumber;
+        ratio: BigNumber;
+      }
+    >;
 
     liquidate(
       owner: string,
@@ -605,9 +655,9 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        debt: BigNumber;
-        value: BigNumber;
         coll: BigNumber;
+        value: BigNumber;
+        debt: BigNumber;
         ratio: BigNumber;
       }
     >;
@@ -648,9 +698,9 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber, BigNumber, BigNumber] & {
-        debt: BigNumber;
-        value: BigNumber;
         coll: BigNumber;
+        value: BigNumber;
+        debt: BigNumber;
         ratio: BigNumber;
       }
     >;
@@ -716,6 +766,12 @@ export class Lender extends BaseContract {
 
     acceptOwner(
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    computePostion(
+      coll: BigNumberish,
+      debt: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     liquidate(
@@ -823,6 +879,12 @@ export class Lender extends BaseContract {
 
     acceptOwner(
       overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    computePostion(
+      coll: BigNumberish,
+      debt: BigNumberish,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     liquidate(

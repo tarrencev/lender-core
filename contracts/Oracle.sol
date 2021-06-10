@@ -25,6 +25,6 @@ contract Oracle is IOracle {
     /// @notice Fetches time-weighted token conversion rate using Uniswap V3 pool oracle.
     function observe(uint32 period) external view override returns (uint256) {
         int24 tick = OracleLibrary.consult(_pool, period);
-        return OracleLibrary.getQuoteAtTick(tick, 1 ether, usdcAddress, wethAddress);
+        return OracleLibrary.getQuoteAtTick(tick, 1e6, usdcAddress, wethAddress);
     }
 }

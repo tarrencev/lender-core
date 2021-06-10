@@ -30,9 +30,9 @@ contract Lender is Ownable, ReentrancyGuard {
     using SafeERC20 for INUSD;
 
     struct Position {
-        uint256 debt;
-        uint256 value;
         uint256 coll;
+        uint256 value;
+        uint256 debt;
         uint256 ratio;
     }
 
@@ -206,10 +206,14 @@ contract Lender is Ownable, ReentrancyGuard {
             return Position(0, 0, 0, 0);
         }
 
-        uint256 price = observe();
         uint256 coll = FullMath.mulDiv(_positions[holder].coll, _actualColl, _openedColl);
-        uint256 value = coll.mul(price);
         uint256 debt = FullMath.mulDiv(_positions[holder].debt, _actualDebt, _openedDebt);
+        return computePostion(coll, debt);
+    }
+
+    function computePostion(uint256 coll, uint256 debt) public view returns (Position memory) {
+        uint256 price = observe();
+        uint256 value = coll.mul(price);
         uint256 ratio = CollateralMath.ratio(coll, debt, price);
         return Position(coll, value, debt, ratio);
     }

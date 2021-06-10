@@ -57,7 +57,7 @@
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
     "@uniswap/v3-core": "^1.0.0",
-    "@uniswap/v3-periphery": "git://github.com/Uniswap/uniswap-v3-periphery.git",
+    "@uniswap/v3-periphery": "1.1.0",
     "chai": "^4.3.4",
     "cross-env": "^7.0.2",
     "dotenv": "^9.0.2",

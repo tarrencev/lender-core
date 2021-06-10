@@ -121,7 +121,7 @@ async function performAction(rawArgs) {
       } ${options['no-impersonation']
         ? `HARDHAT_DEPLOY_NO_IMPERSONATION=true`
         : ''
-      } HARDHAT_DEPLOY_FIXTURE=true HARDHAT_COMPILE=true mocha --bail --recursive test ${extra.join(
+      } HARDHAT_DEPLOY_FIXTURE=true HARDHAT_COMPILE=true hardhat test ${extra.join(
         ' '
       )}`
     );

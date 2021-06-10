@@ -1533,15 +1533,17 @@
   resolved "https://registry.yarnpkg.com/@uniswap/v3-core/-/v3-core-1.0.0.tgz#6c24adacc4c25dceee0ba3ca142b35adbd7e359d"
   integrity sha512-kSC4djMGKMHj7sLMYVnn61k9nu+lHjMIxgg9CDQT+s2QYLoA56GbSK9Oxr+qJXzzygbkrmuY6cwgP6cW2JXPFA==
 
-"@uniswap/v3-periphery@git://github.com/Uniswap/uniswap-v3-periphery.git":
-  version "1.0.1"
-  resolved "git://github.com/Uniswap/uniswap-v3-periphery.git#b55e7e81a803082c0328e2826592327da373ab00"
+"@uniswap/v3-periphery@1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@uniswap/v3-periphery/-/v3-periphery-1.1.0.tgz#0afdf4d0bed536d06988a9d29f466c05f9f3286b"
+  integrity sha512-fZU0Ohf4uIpHxMEKuTjdjIPM/fWPh35m5sRAKo93RqAlwPD8UmMhngXEwcC4Hj8fz3bimmoY++2DiniGUVzpdQ==
   dependencies:
     "@openzeppelin/contracts" "3.4.1-solc-0.7-2"
     "@uniswap/lib" "^4.0.1-alpha"
     "@uniswap/v2-core" "1.0.1"
     "@uniswap/v3-core" "1.0.0"
     base64-sol "1.0.1"
+    hardhat-watcher "^2.1.1"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
@@ -3060,7 +3062,7 @@ chokidar@3.3.0:
   optionalDependencies:
     fsevents "~2.1.1"
 
-chokidar@3.5.1, chokidar@^3.4.0:
+chokidar@3.5.1, chokidar@^3.4.0, chokidar@^3.4.3:
   version "3.5.1"
   resolved "https://registry.yarnpkg.com/chokidar/-/chokidar-3.5.1.tgz#ee9ce7bbebd2b79f49f304799d5468e31e14e68a"
   integrity sha512-9+s+Od+W0VJJzawDma/gvBNQqkTiqYTWLuZoyAsivsI4AaWTCzHG06/TMjsf1cYe9Cb97UCEhjz7HvnPk2p/tw==
@@ -5708,6 +5710,13 @@ hardhat-gas-reporter@^1.0.1:
   dependencies:
     eth-gas-reporter "^0.2.20"
     sha1 "^1.1.1"
+
+hardhat-watcher@^2.1.1:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/hardhat-watcher/-/hardhat-watcher-2.1.1.tgz#8b05fec429ed45da11808bbf6054a90f3e34c51a"
+  integrity sha512-zilmvxAYD34IofBrwOliQn4z92UiDmt2c949DW4Gokf0vS0qk4YTfVCi/LmUBICThGygNANE3WfnRTpjCJGtDA==
+  dependencies:
+    chokidar "^3.4.3"
 
 hardhat@^2.3.0:
   version "2.3.0"
