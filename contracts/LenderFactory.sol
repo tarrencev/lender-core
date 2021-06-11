@@ -24,21 +24,11 @@ contract LenderFactory is ILenderFactory, Ownable {
         uint32 oraclePeriod,
         uint256 fee,
         uint256 minDebt,
-        uint256 minPositionCollateralizationRatio,
-        uint256 minSystemCollateralizationRatio
+        uint128 minBCR,
+        uint128 minLCR
     ) external override returns (address) {
         Lender lender =
-            new Lender(
-                collateral,
-                address(_stable),
-                oracle,
-                oraclePoolFee,
-                oraclePeriod,
-                fee,
-                minDebt,
-                minPositionCollateralizationRatio,
-                minSystemCollateralizationRatio
-            );
+            new Lender(collateral, address(_stable), oracle, oraclePoolFee, oraclePeriod, fee, minDebt, minBCR, minLCR);
         lender.setOwner(owner());
         return address(lender);
     }

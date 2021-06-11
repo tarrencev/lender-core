@@ -17,27 +17,32 @@ import "./interfaces/INUSD.sol";
 import "./interfaces/IOracle.sol";
 
 import "./libraries/CollateralMath.sol";
+import "./libraries/LenderCollateral.sol";
+import "./libraries/LenderStable.sol";
+import "./libraries/Position.sol";
+import "./libraries/Update.sol";
+import "./libraries/SafeCast.sol";
 import "./utils/Ownable.sol";
 
 /// @title Collateralized lender.
 contract Lender is Ownable, ReentrancyGuard {
-    address public constant uniswapV3Factory = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
-    address public constant wethAddress = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
+    address public constant UNISWAP_V3_FACTORY = 0x1F98431c8aD98523631AE4a59f267346ea31F984;
+    address public constant WETH_ADDRESS = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2;
 
     using LowGasSafeMath for uint256;
+    using LowGasSafeMath for int256;
     using CollateralMath for uint256;
+    using SafeCast for uint256;
+    using SafeCast for int256;
+    using LenderStable for INUSD;
+    using LenderCollateral for IERC20;
     using SafeERC20 for IERC20;
-    using SafeERC20 for INUSD;
+    using Position for Position.Info;
+    using Position for mapping(address => Position.Info);
+    using Update for Update.Info;
 
-    struct Position {
-        uint256 coll;
-        uint256 value;
-        uint256 debt;
-        uint256 ratio;
-    }
-
-    event Update(address indexed owner, uint256 coll, uint256 debt);
-    event Liquidate(address indexed owner, address liquidator);
+    event Updated(address indexed owner, uint256 coll, uint256 debt);
+    event Liquidated(address indexed owner, address liquidator);
 
     // Lender collateral token.
     IERC20 public _collateral;
@@ -55,209 +60,196 @@ contract Lender is Ownable, ReentrancyGuard {
     // Minimum debt of a position.
     uint256 public _minDebt;
     // Minimum collateralization ratio of a position.
-    uint256 public _minPositionCollateralizationRatio;
+    uint128 public _minBCR;
     // Minimum collateralization ratio of the system before recovery mode is enabled.
-    uint256 public _minSystemCollateralizationRatio;
+    uint128 public _minLCR;
 
-    // Aggregate opened collateral.
-    uint256 public _openedColl;
-    // Aggregate opened debt.
-    uint256 public _openedDebt;
-    // Actual collateral balance. Opened - Redeemed + Redistributed.
-    uint256 public _actualColl;
-    // Actual debt balance. Opened - Redeemed + Redistributed.
-    uint256 public _actualDebt;
-    // User to position mapping.
-    mapping(address => Position) public _positions;
+    // Lenders opened postion.
+    Position.Info public lNominal;
+
+    // Lenders real postion.
+    Position.Info public lReal;
+
+    // Borrower to position mapping.
+    mapping(address => Position.Info) public _positions;
 
     constructor(
-        address collateral,
+        address collateral_,
         address nusd,
-        address ethusdOracle,
-        uint24 oraclePoolFee,
-        uint32 oraclePeriod,
-        uint256 fee,
-        uint256 minDebt,
-        uint256 minPositionCollateralizationRatio,
-        uint256 minSystemCollateralizationRatio
+        address ethusdOracle_,
+        uint24 oraclePoolFee_,
+        uint32 oraclePeriod_,
+        uint256 fee_,
+        uint256 minDebt_,
+        uint128 minBCR_,
+        uint128 minLCR_
     ) Ownable(msg.sender) {
-        _collateral = IERC20(collateral);
+        _collateral = IERC20(collateral_);
         _nusd = INUSD(nusd);
-        _ethusdOracle = IOracle(ethusdOracle);
-        _oraclePeriod = oraclePeriod;
+        _ethusdOracle = IOracle(ethusdOracle_);
+        _oraclePeriod = oraclePeriod_;
         _oraclePool = PoolAddress.computeAddress(
-            uniswapV3Factory,
-            PoolAddress.getPoolKey(collateral, wethAddress, oraclePoolFee)
+            UNISWAP_V3_FACTORY,
+            PoolAddress.getPoolKey(collateral_, WETH_ADDRESS, oraclePoolFee_)
         );
 
-        _fee = fee;
-        _minDebt = minDebt;
-        _minPositionCollateralizationRatio = minPositionCollateralizationRatio;
-        _minSystemCollateralizationRatio = minSystemCollateralizationRatio;
+        _fee = fee_;
+        _minDebt = minDebt_;
+        _minBCR = minBCR_;
+        _minLCR = minLCR_;
+
+        lNominal.update(Update.Info(15e17, 10e17));
+        lReal.update(Update.Info(15e17, 10e17));
+
+        // _nusd.mint(msg.sender, 10e17);
+        // _collateral.safeTransferFrom(msg.sender, address(this), 15e17);
     }
 
     /// @notice Update a position.
-    /// @param collDelta The collateral delta to apply to the position.
-    /// @param debtDelta The debt delta to apply to the position.
-    function update(int256 collDelta, int256 debtDelta) external nonReentrant returns (Position memory) {
-        require(collDelta != 0 || debtDelta != 0, "noop update");
+    /// @param uReal The real update apply to the position.
+    function update(Update.Info calldata uReal) external nonReentrant {
+        require(uReal.coll != 0 || uReal.debt != 0, "noop update");
 
-        (uint256 coll, uint256 debt) = _positionOf(msg.sender);
+        Position.Info storage bNominal = _positions.get(msg.sender);
+        Update.Info memory uNominal = uReal.nominal(lReal, lNominal);
 
-        uint256 nextColl = coll.addDelta(collDelta);
-        uint256 nextDebt = debt.addDelta(debtDelta);
-
-        _openedColl = _openedColl.addDelta(collDelta);
-        _openedDebt = _openedDebt.addDelta(debtDelta);
-        _actualColl = _actualColl.addDelta(collDelta);
-        _actualDebt = _actualDebt.addDelta(debtDelta);
+        lReal.update(uReal);
+        lNominal.update(uNominal);
+        bNominal.update(uNominal);
 
         // Position was closed.
-        if (nextColl == 0 && nextDebt == 0) {
+        if (bNominal.coll == 0 && bNominal.debt == 0) {
             delete _positions[msg.sender];
-            _nusd.burn(msg.sender, uint256(-debtDelta));
-            _collateral.safeTransfer(msg.sender, uint256(-collDelta));
-            emit Update(msg.sender, 0, 0);
-            return Position(0, 0, 0, 0);
-        }
-
-        // Charge a fee for debt increases.
-        if (debtDelta > 0) {
-            nextDebt = nextDebt.add(_fee);
-            _openedDebt = _openedDebt.add(_fee);
-            _actualDebt = _actualDebt.add(_fee);
-            _nusd.mint(owner(), _fee);
+            _nusd.update(uReal.debt);
+            _collateral.update(uReal.coll);
+            emit Updated(msg.sender, 0, 0);
+            return;
         }
 
         uint256 price = observe();
-        uint256 ratio = CollateralMath.ratio(nextColl, nextDebt, price);
+        int256 ratio = bNominal.ratio(price);
 
-        require(nextDebt >= _minDebt, "less than min debt");
+        // Charge a fee for operations that occur when the position is below lender collateralization ratio.
+        int256 fee_ = 0;
+        if (ratio < _minLCR) {
+            fee_ = fee(uint256(ratio)).toInt256();
+            bNominal.update(Update.Info(0, fee_));
+            lNominal.update(Update.Info(0, fee_));
+            lReal.update(Update.Info(0, fee_));
 
-        if (CollateralMath.ratio(_actualColl, _actualDebt, price) < _minSystemCollateralizationRatio) {
-            // System is in recovery mode.
-            require(ratio >= _minSystemCollateralizationRatio, "undercollateralized position");
+            // TODO: Where to mint the fee to?
+            _nusd.mint(owner(), uint256(fee_));
+        }
+
+        require(bNominal.debt >= _minDebt, "less than min debt");
+
+        ratio = bNominal.ratio(price);
+
+        // System is in recovery mode.
+        if (lReal.ratio(price) < _minLCR) {
+            require(ratio >= _minLCR, "undercollateralized system");
         } else {
-            // Position would push system under ratio.
-            require(
-                CollateralMath.ratio(_actualColl.add(nextColl), _actualDebt.add(nextDebt), price) >
-                    _minSystemCollateralizationRatio,
-                "undercollateralized system"
-            );
-            require(ratio > _minPositionCollateralizationRatio, "undercollateralized system");
+            require(ratio >= _minBCR, "undercollateralized borrower");
         }
 
-        _positions[msg.sender].coll = nextColl;
-        _positions[msg.sender].debt = nextDebt;
+        _nusd.update(uReal.debt.sub(fee_));
+        _collateral.update(uReal.coll);
 
-        if (debtDelta < 0) {
-            _nusd.burn(msg.sender, uint256(-debtDelta));
-        } else if (debtDelta > 0) {
-            _nusd.mint(msg.sender, uint256(debtDelta));
-        }
-
-        if (collDelta < 0) {
-            _collateral.safeTransfer(msg.sender, uint256(-collDelta));
-        } else if (collDelta > 0) {
-            _collateral.safeTransferFrom(msg.sender, address(this), uint256(collDelta));
-        }
-
-        emit Update(msg.sender, nextColl, nextDebt);
-
-        return Position(nextColl, nextColl.mul(price), nextDebt, ratio);
+        emit Updated(msg.sender, bNominal.coll, bNominal.debt);
     }
 
     /// @notice Liquidate a position.
     /// @param owner The position owner.
     function liquidate(address owner, bytes calldata data) external nonReentrant {
-        (uint256 coll, uint256 debt) = _positionOf(owner);
-        require(debt != 0, "position has no debt");
+        Position.Info memory bNominal = _positions[owner];
+        require(bNominal.debt != 0, "position has no debt");
+
+        Position.Info memory bReal = CollateralMath.real(bNominal, lNominal, lReal);
 
         uint256 price = observe();
-        require(isValidLiquidation(price, CollateralMath.ratio(coll, debt, price)), "invalid liquidation");
+        require(isValidLiquidation(price, bReal.ratio(price)), "invalid liquidation");
 
-        _collateral.safeTransfer(msg.sender, coll);
+        _collateral.safeTransfer(msg.sender, bReal.coll);
 
-        ILiquidateCallback(msg.sender).liquidateCallback(coll, debt, data);
+        ILiquidateCallback(msg.sender).liquidateCallback(bReal.coll, bReal.debt, data);
 
-        _actualDebt = _actualDebt.sub(debt);
-        _actualColl = _actualColl.sub(coll);
-
-        _openedColl = _openedColl.sub(_positions[owner].coll);
-        _openedDebt = _openedDebt.sub(_positions[owner].debt);
+        // We cast the positon values (uint128) to update values (int256) and negate
+        // them to subtract the values from the system.
+        lReal.update(Update.Info(-int256(bReal.coll), -int256(bReal.debt)));
+        lNominal.update(Update.Info(-int256(bNominal.coll), -int256(bNominal.debt)));
         delete _positions[owner];
 
-        _nusd.burn(msg.sender, debt);
+        _nusd.burn(msg.sender, bReal.debt);
 
-        emit Liquidate(owner, msg.sender);
+        emit Liquidated(owner, msg.sender);
     }
 
-    function observe() public view returns (uint256) {
+    /// @notice Compute an updates fee.
+    /// @param ratio How far below the lender colalteralization ratio is the borrower.
+    function fee(uint256 ratio) public view returns (uint256) {
+        if (ratio >= _minLCR) {
+            return 0;
+        }
+
+        if (ratio < _minBCR) {
+            return _fee;
+        }
+
+        int256 below = ratio.toInt256().sub(_minLCR);
+        if (below <= uint256(_minBCR).toInt256().sub(_minLCR)) {
+            return _fee;
+        }
+
+        return (1 - (uint256(-below) / uint256(_minLCR).add(_minBCR))).mul(_fee);
+    }
+
+    function observe() public view virtual returns (uint256) {
         uint128 ethusd = uint128(_ethusdOracle.observe(_oraclePeriod));
         int24 tick = OracleLibrary.consult(_oraclePool, _oraclePeriod);
-        return OracleLibrary.getQuoteAtTick(tick, ethusd, address(_collateral), wethAddress);
+        return OracleLibrary.getQuoteAtTick(tick, ethusd, address(_collateral), WETH_ADDRESS);
     }
+
+    // function redeem() public {
+
+    // }
 
     /// @notice Compute the current collateral, debt, and ratio of a position by owner.
-    /// @param holder The position holder.
-    /// @return position The holders position.
-    function positionOf(address holder) external view returns (Position memory) {
-        if (_positions[holder].coll == 0) {
-            return Position(0, 0, 0, 0);
+    /// @param borrower The position borrower.
+    /// @return position The borrowers position.
+    function positionOf(address borrower) external view returns (Position.Info memory) {
+        if (_positions[borrower].coll == 0) {
+            return Position.Info(0, 0);
         }
 
-        uint256 coll = FullMath.mulDiv(_positions[holder].coll, _actualColl, _openedColl);
-        uint256 debt = FullMath.mulDiv(_positions[holder].debt, _actualDebt, _openedDebt);
-        return computePostion(coll, debt);
-    }
-
-    function computePostion(uint256 coll, uint256 debt) public view returns (Position memory) {
-        uint256 price = observe();
-        uint256 value = coll.mul(price);
-        uint256 ratio = CollateralMath.ratio(coll, debt, price);
-        return Position(coll, value, debt, ratio);
-    }
-
-    /// @notice Compute the current collateral and debt position by holder.
-    /// @param holder The position holder.
-    /// @return coll The positions collateral balance.
-    /// @return debt The positions debt balance.
-    function _positionOf(address holder) internal view returns (uint256 coll, uint256 debt) {
-        if (_positions[holder].coll == 0) {
-            return (0, 0);
-        }
-        coll = FullMath.mulDiv(_positions[holder].coll, _actualColl, _openedColl);
-        debt = FullMath.mulDiv(_positions[holder].debt, _actualDebt, _openedDebt);
+        return CollateralMath.real(_positions[borrower], lNominal, lReal);
     }
 
     /// @notice Compute the total collateralization ratio of the issuer.
     /// @param price The collateral price.
     /// @return The total collateralization of the issuer.
-    function totalCollateralizationRatio(uint256 price) public view returns (uint256) {
-        return CollateralMath.ratio(_actualColl, _actualDebt, price);
+    function totalCollateralizationRatio(uint256 price) public view returns (int256) {
+        return lReal.ratio(price);
     }
 
     /// @notice Validates a position's liquidation.
     /// @param price Current collateral price.
     /// @param ratio Positions collateralization ratio.
     /// @return True if the position can be liquidated, else false.
-    function isValidLiquidation(uint256 price, uint256 ratio) internal view returns (bool) {
-        return
-            (isRecovering(price) && ratio < _minSystemCollateralizationRatio) ||
-            ratio < _minPositionCollateralizationRatio;
+    function isValidLiquidation(uint256 price, int256 ratio) internal view returns (bool) {
+        return (isRecovering(price) && ratio < _minLCR) || ratio < _minBCR;
     }
 
     /// @notice Checks if the issuer is in recovery mode.
     /// @param price Current collateral price.
     /// @return True if system is in recovery, else false.
     function isRecovering(uint256 price) internal view returns (bool) {
-        return totalCollateralizationRatio(price) < _minSystemCollateralizationRatio;
+        return totalCollateralizationRatio(price) < _minLCR;
     }
 
     /// @notice Set lender issuance fee.
-    /// @param fee Issuance fee.
-    function setFee(uint256 fee) external onlyOwner {
-        _fee = fee;
+    /// @param fee_ Issuance fee.
+    function setFee(uint256 fee_) external onlyOwner {
+        _fee = fee_;
     }
 
     /// @notice Set lender min debt.
@@ -267,15 +259,15 @@ contract Lender is Ownable, ReentrancyGuard {
     }
 
     /// @notice Set minimum position collateralization ratio.
-    /// @param minPositionCollateralizationRatio Minimum position collateralization ratio.
-    function setMinPositionCollateralizationRatio(uint256 minPositionCollateralizationRatio) external onlyOwner {
-        _minPositionCollateralizationRatio = minPositionCollateralizationRatio;
+    /// @param minBCR Minimum position collateralization ratio.
+    function setMinPositionCollateralizationRatio(uint128 minBCR) external onlyOwner {
+        _minBCR = minBCR;
     }
 
     /// @notice Set minimum system collateralization ratio.
-    /// @param minSystemCollateralizationRatio Minimum system collateralization ratio.
-    function setMinSystemCollateralizationRatio(uint256 minSystemCollateralizationRatio) external onlyOwner {
-        _minSystemCollateralizationRatio = minSystemCollateralizationRatio;
+    /// @param minLCR Minimum system collateralization ratio.
+    function setMinSystemCollateralizationRatio(uint128 minLCR) external onlyOwner {
+        _minLCR = minLCR;
     }
 
     /// @notice Set collateral oracle.

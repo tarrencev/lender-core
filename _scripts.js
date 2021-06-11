@@ -115,6 +115,14 @@ async function performAction(rawArgs) {
       blockNumber: 'string',
       'no-impersonation': 'boolean',
     });
+    console.log(`cross-env HARDHAT_DEPLOY_ACCOUNTS_NETWORK=${fixedArgs[0]} HARDHAT_FORK=${fixedArgs[0]
+      } ${options.blockNumber ? `HARDHAT_FORK_NUMBER=${options.blockNumber}` : ''
+      } ${options['no-impersonation']
+        ? `HARDHAT_DEPLOY_NO_IMPERSONATION=true`
+        : ''
+      } HARDHAT_DEPLOY_FIXTURE=true HARDHAT_COMPILE=true hardhat test ${extra.join(
+        ' '
+      )}`)
     await execute(
       `cross-env HARDHAT_DEPLOY_ACCOUNTS_NETWORK=${fixedArgs[0]} HARDHAT_FORK=${fixedArgs[0]
       } ${options.blockNumber ? `HARDHAT_FORK_NUMBER=${options.blockNumber}` : ''

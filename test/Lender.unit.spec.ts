@@ -2,27 +2,27 @@ import {deployments, ethers, getNamedAccounts} from 'hardhat';
 import {SignerWithAddress} from '@nomiclabs/hardhat-ethers/dist/src/signer-with-address';
 import {expect} from 'chai';
 
+import {CollateralFake} from '../types/CollateralFake';
 import {TestCallee} from '../types/TestCallee';
 import {IERC20} from '../types/IERC20';
-import {Lender} from '../types/Lender';
+import {LenderTest} from '../types/LenderTest';
 import {NUSD} from '../types/NUSD';
+import {ObservableFake} from '../types/ObservableFake';
 import {OracleFake} from '../types/OracleFake';
 import {FeeAmount} from '../utils/constants';
 
-const {constants, utils} = ethers;
+const {BigNumber, constants, utils} = ethers;
 
 const MIN_DEBT = utils.parseUnits('1', 15);
-const MIN_POSITION_COLLATERALIZATION_RATIO = utils.parseUnits('110', 15);
-const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 15);
+const MIN_POSITION_COLLATERALIZATION_RATIO = utils.parseUnits('110', 16);
+const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 16);
 
 const setup = deployments.createFixture(async (): Promise<{
   contracts: {
     callee: TestCallee;
-    lender: Lender;
+    lender: LenderTest;
     nusd: NUSD;
-    oracle: OracleFake;
-    stETH: IERC20;
-    wstETH: IERC20;
+    collateral: IERC20;
   };
   accounts: {
     deployer: SignerWithAddress;
@@ -36,27 +36,36 @@ const setup = deployments.createFixture(async (): Promise<{
     keepExistingDeployments: true, // global option to test network like that
   });
   const {deployer} = await getNamedAccounts();
-  const stETH = await ethers.getContract('StETH', deployer);
-  const wstETH = await ethers.getContract('WStETH');
-
   let [sudo, alice, bob, carol] = await ethers.getSigners();
 
   await deployments.deploy('TestCallee', {
     from: deployer,
   });
-
   await deployments.deploy('OracleFake', {
+    from: deployer,
+  });
+  await deployments.deploy('ObservableFake', {
+    from: deployer,
+  });
+  await deployments.deploy('CollateralFake', {
+    args: ['collateral', 'fake'],
     from: deployer,
   });
 
   const callee = <TestCallee>await ethers.getContract('TestCallee', deployer);
   const nusd = <NUSD>await ethers.getContract('NUSD', deployer);
   const oracle = <OracleFake>await ethers.getContract('OracleFake', deployer);
+  const observable = <ObservableFake>(
+    await ethers.getContract('ObservableFake', deployer)
+  );
+  const collateral = <CollateralFake>(
+    await ethers.getContract('CollateralFake', deployer)
+  );
 
-  await deployments.deploy('Lender', {
+  await deployments.deploy('LenderTest', {
     from: deployer,
     args: [
-      wstETH.address,
+      collateral.address,
       nusd.address,
       oracle.address,
       FeeAmount.LOW,
@@ -65,11 +74,12 @@ const setup = deployments.createFixture(async (): Promise<{
       MIN_DEBT,
       MIN_POSITION_COLLATERALIZATION_RATIO,
       MIN_SYSTEM_COLLATERALIZATION_RATIO,
+      observable.address,
     ],
     log: true,
   });
 
-  const lender = <Lender>await ethers.getContract('Lender', deployer);
+  const lender = <LenderTest>await ethers.getContract('LenderTest', deployer);
 
   await nusd.addIssuer(lender.address);
   await nusd.addIssuer(sudo.address);
@@ -83,13 +93,10 @@ const setup = deployments.createFixture(async (): Promise<{
   };
 
   for (let account of Object.values(accounts)) {
-    await stETH.connect(account).submit(constants.AddressZero, {
-      value: utils.parseUnits('1', 21),
-    });
-    await stETH.connect(account).approve(wstETH.address, constants.MaxUint256);
-    await wstETH.connect(account).approve(lender.address, constants.MaxUint256);
-    const balance = await stETH.balanceOf(account.address);
-    await wstETH.connect(account).wrap(balance);
+    await collateral.mint(account.address, utils.parseUnits('1', 25));
+    await collateral
+      .connect(account)
+      .approve(lender.address, constants.MaxUint256);
   }
 
   return {
@@ -97,9 +104,7 @@ const setup = deployments.createFixture(async (): Promise<{
       callee,
       lender,
       nusd,
-      oracle,
-      stETH: stETH as IERC20,
-      wstETH: wstETH as IERC20,
+      collateral: collateral as IERC20,
     },
     accounts,
   };
@@ -107,138 +112,162 @@ const setup = deployments.createFixture(async (): Promise<{
 
 describe('Lender.unit', () => {
   describe('opening a position', async () => {
-    for (const {name, coll, debt, price, revert} of [
+    for (const {name, update, price, revert} of [
       {
         name: 'with minimum debt and minimum collateralization succeeds',
-        coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-        debt: MIN_DEBT,
+        update: {
+          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+          debt: MIN_DEBT,
+        },
         price: utils.parseUnits('1', 18),
         revert: undefined,
       },
       {
         name: 'with less than min debt and reverts',
-        coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-        debt: MIN_DEBT.sub(1),
+        update: {
+          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+          debt: MIN_DEBT.sub(1),
+        },
         price: utils.parseUnits('1', 18),
         revert: 'less than min debt',
       },
       {
         name: 'with less than min system collateral ratio for first loan and reverts',
-        coll: MIN_POSITION_COLLATERALIZATION_RATIO,
-        debt: utils.parseUnits('1', 18),
+        update: {
+          coll: MIN_POSITION_COLLATERALIZATION_RATIO,
+          debt: utils.parseUnits('1', 18),
+        },
         price: utils.parseUnits('1', 18),
-        revert: 'undercollateralized position',
+        revert: 'undercollateralized system',
       },
       {
         name: 'with negative collateral and reverts',
-        coll: MIN_POSITION_COLLATERALIZATION_RATIO.mul(-1),
-        debt: utils.parseUnits('1', 18),
+        update: {
+          coll: MIN_POSITION_COLLATERALIZATION_RATIO.mul(-1),
+          debt: utils.parseUnits('1', 18),
+        },
         price: utils.parseUnits('1', 18),
         revert: 'LS',
       },
       {
         name: 'with negative debt and reverts',
-        coll: MIN_POSITION_COLLATERALIZATION_RATIO,
-        debt: utils.parseUnits('1', 18).mul(-1),
+        update: {
+          coll: MIN_POSITION_COLLATERALIZATION_RATIO,
+          debt: utils.parseUnits('1', 18).mul(-1),
+        },
         price: utils.parseUnits('1', 18),
         revert: 'LS',
       },
     ]) {
       it(name, async () => {
         const {
-          contracts: {lender, nusd, oracle, wstETH: collateral},
+          contracts: {lender, nusd, collateral: collateral},
           accounts: {alice},
         } = await setup();
 
-        if (coll.gt(0)) {
-          await collateral.connect(alice).approve(lender.address, coll);
+        if (update.coll.gt(0)) {
+          await collateral.connect(alice).approve(lender.address, update.coll);
         }
-        await oracle.set(price);
+        await lender.setPrice(price);
 
         if (revert) {
-          await expect(
-            lender.connect(alice).update(coll, debt)
-          ).to.be.revertedWith(revert);
+          await expect(lender.connect(alice).update(update)).to.be.revertedWith(
+            revert
+          );
         } else {
-          await lender.connect(alice).update(coll, debt);
-          expect(await nusd.balanceOf(alice.address)).to.equal(debt);
-          expect(await collateral.balanceOf(lender.address)).to.equal(coll);
+          await lender.connect(alice).update(update);
+          expect(await nusd.balanceOf(alice.address)).to.equal(update.debt);
+          expect(await collateral.balanceOf(lender.address)).to.equal(
+            update.coll
+          );
           const got = await lender.positionOf(alice.address);
-          expect(got.coll).to.equal(coll);
-          expect(got.debt).to.equal(debt);
+          expect(got.coll).to.equal(update.coll);
+          expect(got.debt).to.equal(update.debt);
         }
       });
     }
   });
 
   describe('updating a positon', async () => {
-    const coll = MIN_SYSTEM_COLLATERALIZATION_RATIO;
-    const debt = utils.parseUnits('1', 18);
+    const open = {
+      coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+      debt: utils.parseUnits('1', 18),
+    };
 
-    for (const {name, collDelta, debtDelta, price, revert} of [
+    for (const {name, update, price, revert} of [
       {
         name: 'with additonal collateral succeeds',
-        collDelta: utils.parseUnits('10', 18),
-        debtDelta: constants.Zero,
+        update: {
+          coll: utils.parseUnits('10', 18),
+          debt: constants.Zero,
+        },
         price: utils.parseUnits('1', 18),
       },
       {
         name: 'with additonal collateral when price has dropped succeeds',
-        collDelta: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-        debtDelta: constants.Zero,
+        update: {
+          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+          debt: constants.Zero,
+        },
         price: utils.parseUnits('1', 18).div(2),
       },
       {
         name: 'to repay debt and withdraw all collateral succeeds',
-        collDelta: MIN_SYSTEM_COLLATERALIZATION_RATIO.mul(-1),
-        debtDelta: utils.parseUnits('1', 18).mul(-1),
+        update: {
+          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO.mul(-1),
+          debt: utils.parseUnits('1', 18).mul(-1),
+        },
         price: utils.parseUnits('1', 18),
       },
       {
         name: 'that pushes the system under collateralization ratio reverts',
-        collDelta: MIN_SYSTEM_COLLATERALIZATION_RATIO.div(2).mul(-1),
-        debtDelta: constants.Zero,
+        update: {
+          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO.div(2).mul(-1),
+          debt: constants.Zero,
+        },
         price: utils.parseUnits('1', 18),
-        revert: 'undercollateralized position',
+        revert: 'undercollateralized system',
       },
       {
         name: 'with a noop reverts',
-        collDelta: constants.Zero,
-        debtDelta: constants.Zero,
+        update: {
+          coll: constants.Zero,
+          debt: constants.Zero,
+        },
         price: utils.parseUnits('1', 18),
         revert: 'noop update',
       },
     ]) {
       it(name, async () => {
         const {
-          contracts: {lender, nusd, oracle, wstETH: collateral},
+          contracts: {lender, nusd, collateral},
           accounts: {alice},
         } = await setup();
 
         // setup
-        await oracle.set(utils.parseUnits('1', 18));
-        await lender.connect(alice).update(coll, debt);
+        await lender.setPrice(utils.parseUnits('1', 18));
+        await lender.connect(alice).update(open);
 
         // test
-        await oracle.set(price);
+        await lender.setPrice(price);
 
         if (revert) {
-          await expect(
-            lender.connect(alice).update(collDelta, debtDelta)
-          ).to.be.revertedWith(revert);
+          await expect(lender.connect(alice).update(update)).to.be.revertedWith(
+            revert
+          );
         } else {
           const supply = await nusd.totalSupply();
           const balance = await collateral.balanceOf(alice.address);
-          await lender.connect(alice).update(collDelta, debtDelta);
+          await lender.connect(alice).update(update);
           expect(await nusd.balanceOf(alice.address)).to.equal(
-            debt.add(debtDelta)
+            open.debt.add(update.debt)
           );
-          expect(await nusd.totalSupply()).to.equal(supply.add(debtDelta));
+          expect(await nusd.totalSupply()).to.equal(supply.add(update.debt));
           expect(await collateral.balanceOf(lender.address)).to.equal(
-            coll.add(collDelta)
+            open.coll.add(update.coll)
           );
           expect(await collateral.balanceOf(alice.address)).to.equal(
-            balance.sub(collDelta)
+            balance.sub(update.coll)
           );
         }
       });
@@ -252,13 +281,17 @@ describe('Lender.unit', () => {
         price: utils.parseUnits('1', 17),
         positions: {
           alice: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
           },
           bob: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
             stability: utils.parseUnits('1', 18),
           },
@@ -291,13 +324,17 @@ describe('Lender.unit', () => {
         price: utils.parseUnits('1', 17),
         positions: {
           alice: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
           },
           bob: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
             stability: utils.parseUnits('1', 18),
           },
@@ -313,13 +350,17 @@ describe('Lender.unit', () => {
         price: utils.parseUnits('1', 18),
         positions: {
           alice: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
           },
           bob: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
           },
         },
@@ -330,8 +371,10 @@ describe('Lender.unit', () => {
         price: utils.parseUnits('1', 18),
         positions: {
           bob: {
-            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
-            debt: utils.parseUnits('1', 18),
+            open: {
+              coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+              debt: utils.parseUnits('1', 18),
+            },
             price: utils.parseUnits('1', 18),
           },
         },
@@ -340,21 +383,19 @@ describe('Lender.unit', () => {
     ]) {
       it(name, async () => {
         const {
-          contracts: {lender, callee, nusd, oracle, wstETH: collateral},
+          contracts: {lender, callee, nusd, collateral: collateral},
           accounts: {alice, bob},
         } = await setup();
 
+        await lender.setPrice(utils.parseUnits('1', 18));
+
         if (positions.alice) {
-          await oracle.set(positions.alice.price);
-          await lender
-            .connect(alice)
-            .update(positions.alice.coll, positions.alice.debt);
+          await lender.setPrice(positions.alice.price);
+          await lender.connect(alice).update(positions.alice.open);
         }
 
-        await oracle.set(positions.bob.price);
-        await lender
-          .connect(bob)
-          .update(positions.bob.coll, positions.bob.debt);
+        await lender.setPrice(positions.bob.price);
+        await lender.connect(bob).update(positions.bob.open);
 
         if (positions.callee) {
           await nusd
@@ -365,7 +406,7 @@ describe('Lender.unit', () => {
             .transfer(callee.address, positions.callee.nusd);
         }
 
-        await oracle.set(price);
+        await lender.setPrice(price);
 
         if (revert) {
           expect(

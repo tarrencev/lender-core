@@ -19,7 +19,7 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
-interface LenderInterface extends ethers.utils.Interface {
+interface LenderTestInterface extends ethers.utils.Interface {
   functions: {
     "UNISWAP_V3_FACTORY()": FunctionFragment;
     "WETH_ADDRESS()": FunctionFragment;
@@ -50,6 +50,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "setOracle(address)": FunctionFragment;
     "setOraclePeriod(uint32)": FunctionFragment;
     "setOwner(address)": FunctionFragment;
+    "setPrice(uint256)": FunctionFragment;
     "totalCollateralizationRatio(uint256)": FunctionFragment;
     "update(tuple)": FunctionFragment;
   };
@@ -126,6 +127,10 @@ interface LenderInterface extends ethers.utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "setOwner", values: [string]): string;
   encodeFunctionData(
+    functionFragment: "setPrice",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
     functionFragment: "totalCollateralizationRatio",
     values: [BigNumberish]
   ): string;
@@ -196,6 +201,7 @@ interface LenderInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setOwner", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "setPrice", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalCollateralizationRatio",
     data: BytesLike
@@ -211,7 +217,7 @@ interface LenderInterface extends ethers.utils.Interface {
   getEvent(nameOrSignatureOrTopic: "Updated"): EventFragment;
 }
 
-export class Lender extends BaseContract {
+export class LenderTest extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -252,7 +258,7 @@ export class Lender extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: LenderInterface;
+  interface: LenderTestInterface;
 
   functions: {
     UNISWAP_V3_FACTORY(overrides?: CallOverrides): Promise<[string]>;
@@ -347,6 +353,11 @@ export class Lender extends BaseContract {
 
     setOwner(
       owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setPrice(
+      price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -456,6 +467,11 @@ export class Lender extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setPrice(
+    price: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   totalCollateralizationRatio(
     price: BigNumberish,
     overrides?: CallOverrides
@@ -547,6 +563,8 @@ export class Lender extends BaseContract {
     ): Promise<void>;
 
     setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+
+    setPrice(price: BigNumberish, overrides?: CallOverrides): Promise<void>;
 
     totalCollateralizationRatio(
       price: BigNumberish,
@@ -664,6 +682,11 @@ export class Lender extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setPrice(
+      price: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     totalCollateralizationRatio(
       price: BigNumberish,
       overrides?: CallOverrides
@@ -769,6 +792,11 @@ export class Lender extends BaseContract {
 
     setOwner(
       owner: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setPrice(
+      price: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

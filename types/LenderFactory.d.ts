@@ -25,7 +25,7 @@ interface LenderFactoryInterface extends ethers.utils.Interface {
     "_pendingOwner()": FunctionFragment;
     "_stable()": FunctionFragment;
     "acceptOwner()": FunctionFragment;
-    "deploy(address,address,uint24,uint32,uint256,uint256,uint256,uint256)": FunctionFragment;
+    "deploy(address,address,uint24,uint32,uint256,uint256,uint128,uint128)": FunctionFragment;
     "owner()": FunctionFragment;
     "setOwner(address)": FunctionFragment;
   };
@@ -134,8 +134,8 @@ export class LenderFactory extends BaseContract {
       oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
+      minBCR: BigNumberish,
+      minLCR: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -164,8 +164,8 @@ export class LenderFactory extends BaseContract {
     oraclePeriod: BigNumberish,
     fee: BigNumberish,
     minDebt: BigNumberish,
-    minPositionCollateralizationRatio: BigNumberish,
-    minSystemCollateralizationRatio: BigNumberish,
+    minBCR: BigNumberish,
+    minLCR: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -192,8 +192,8 @@ export class LenderFactory extends BaseContract {
       oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
+      minBCR: BigNumberish,
+      minLCR: BigNumberish,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -222,8 +222,8 @@ export class LenderFactory extends BaseContract {
       oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
+      minBCR: BigNumberish,
+      minLCR: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -253,8 +253,8 @@ export class LenderFactory extends BaseContract {
       oraclePeriod: BigNumberish,
       fee: BigNumberish,
       minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
+      minBCR: BigNumberish,
+      minLCR: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -11,7 +11,6 @@ import {
   PopulatedTransaction,
   BaseContract,
   ContractTransaction,
-  Overrides,
   CallOverrides,
 } from "ethers";
 import { BytesLike } from "@ethersproject/bytes";
@@ -19,31 +18,22 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { FunctionFragment, EventFragment, Result } from "@ethersproject/abi";
 import { TypedEventFilter, TypedEvent, TypedListener } from "./commons";
 
-interface ILenderFactoryInterface extends ethers.utils.Interface {
+interface MockObservableInterface extends ethers.utils.Interface {
   functions: {
-    "deploy(address,address,uint24,uint32,uint256,uint256,uint128,uint128)": FunctionFragment;
+    "observe(uint32[])": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "deploy",
-    values: [
-      string,
-      string,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish,
-      BigNumberish
-    ]
+    functionFragment: "observe",
+    values: [BigNumberish[]]
   ): string;
 
-  decodeFunctionResult(functionFragment: "deploy", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "observe", data: BytesLike): Result;
 
   events: {};
 }
 
-export class ILenderFactory extends BaseContract {
+export class MockObservable extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
   attach(addressOrName: string): this;
   deployed(): Promise<this>;
@@ -84,75 +74,55 @@ export class ILenderFactory extends BaseContract {
     toBlock?: string | number | undefined
   ): Promise<Array<TypedEvent<EventArgsArray & EventArgsObject>>>;
 
-  interface: ILenderFactoryInterface;
+  interface: MockObservableInterface;
 
   functions: {
-    deploy(
-      collateral: string,
-      oracle: string,
-      oraclePoolFee: BigNumberish,
-      oraclePeriod: BigNumberish,
-      fee: BigNumberish,
-      minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
+    observe(
+      secondsAgos: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber[], BigNumber[]] & {
+        tickCumulatives: BigNumber[];
+        secondsPerLiquidityCumulativeX128s: BigNumber[];
+      }
+    >;
   };
 
-  deploy(
-    collateral: string,
-    oracle: string,
-    oraclePoolFee: BigNumberish,
-    oraclePeriod: BigNumberish,
-    fee: BigNumberish,
-    minDebt: BigNumberish,
-    minPositionCollateralizationRatio: BigNumberish,
-    minSystemCollateralizationRatio: BigNumberish,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
+  observe(
+    secondsAgos: BigNumberish[],
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber[], BigNumber[]] & {
+      tickCumulatives: BigNumber[];
+      secondsPerLiquidityCumulativeX128s: BigNumber[];
+    }
+  >;
 
   callStatic: {
-    deploy(
-      collateral: string,
-      oracle: string,
-      oraclePoolFee: BigNumberish,
-      oraclePeriod: BigNumberish,
-      fee: BigNumberish,
-      minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
+    observe(
+      secondsAgos: BigNumberish[],
       overrides?: CallOverrides
-    ): Promise<string>;
+    ): Promise<
+      [BigNumber[], BigNumber[]] & {
+        tickCumulatives: BigNumber[];
+        secondsPerLiquidityCumulativeX128s: BigNumber[];
+      }
+    >;
   };
 
   filters: {};
 
   estimateGas: {
-    deploy(
-      collateral: string,
-      oracle: string,
-      oraclePoolFee: BigNumberish,
-      oraclePeriod: BigNumberish,
-      fee: BigNumberish,
-      minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    observe(
+      secondsAgos: BigNumberish[],
+      overrides?: CallOverrides
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    deploy(
-      collateral: string,
-      oracle: string,
-      oraclePoolFee: BigNumberish,
-      oraclePeriod: BigNumberish,
-      fee: BigNumberish,
-      minDebt: BigNumberish,
-      minPositionCollateralizationRatio: BigNumberish,
-      minSystemCollateralizationRatio: BigNumberish,
-      overrides?: Overrides & { from?: string | Promise<string> }
+    observe(
+      secondsAgos: BigNumberish[],
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
   };
 }

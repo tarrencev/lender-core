@@ -153,9 +153,21 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.CollateralFake__factory>;
     getContractFactory(
+      name: "LenderTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.LenderTest__factory>;
+    getContractFactory(
+      name: "ObservableFake",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.ObservableFake__factory>;
+    getContractFactory(
       name: "OracleFake",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.OracleFake__factory>;
+    getContractFactory(
+      name: "OracleTest",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.OracleTest__factory>;
     getContractFactory(
       name: "TestCallee",
       signerOrOptions?: ethers.Signer | FactoryOptions

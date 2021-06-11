@@ -43,14 +43,14 @@ const _abi = [
         type: "uint256",
       },
       {
-        internalType: "uint256",
+        internalType: "uint128",
         name: "minPositionCollateralizationRatio",
-        type: "uint256",
+        type: "uint128",
       },
       {
-        internalType: "uint256",
+        internalType: "uint128",
         name: "minSystemCollateralizationRatio",
-        type: "uint256",
+        type: "uint128",
       },
     ],
     name: "deploy",

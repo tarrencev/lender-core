@@ -9,7 +9,7 @@ interface ILenderFactory {
         uint32 oraclePeriod,
         uint256 fee,
         uint256 minDebt,
-        uint256 minPositionCollateralizationRatio,
-        uint256 minSystemCollateralizationRatio
+        uint128 minPositionCollateralizationRatio,
+        uint128 minSystemCollateralizationRatio
     ) external returns (address pool);
 }
