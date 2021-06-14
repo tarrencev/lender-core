@@ -45,4 +45,4 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   });
 };
 export default func;
-func.skip = async (hre: HardhatRuntimeEnvironment) => hre.network.live;
+func.skip = async (hre: HardhatRuntimeEnvironment) => true;
