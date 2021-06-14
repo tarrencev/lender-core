@@ -13,7 +13,7 @@ import {FeeAmount} from '../utils/constants';
 
 const {BigNumber, constants, utils} = ethers;
 
-const MIN_DEBT = utils.parseUnits('1', 15);
+const MIN_DEBT = utils.parseUnits('1', 18);
 const MIN_POSITION_COLLATERALIZATION_RATIO = utils.parseUnits('110', 16);
 const MIN_SYSTEM_COLLATERALIZATION_RATIO = utils.parseUnits('150', 16);
 
@@ -84,6 +84,14 @@ const setup = deployments.createFixture(async (): Promise<{
   await nusd.addIssuer(lender.address);
   await nusd.addIssuer(sudo.address);
 
+  await collateral.approve(lender.address, constants.MaxUint256);
+  await collateral.mint(deployer, MIN_SYSTEM_COLLATERALIZATION_RATIO);
+  await lender.setPrice(utils.parseUnits('1', 18));
+  await lender.initialize({
+    coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+    debt: MIN_DEBT,
+  });
+
   const accounts = {
     deployer: await ethers.getSigner(deployer),
     sudo,
@@ -147,7 +155,7 @@ describe('Lender.unit', () => {
           debt: utils.parseUnits('1', 18),
         },
         price: utils.parseUnits('1', 18),
-        revert: 'LS',
+        revert: 'revert undercollateralized system',
       },
       {
         name: 'with negative debt and reverts',
@@ -156,7 +164,7 @@ describe('Lender.unit', () => {
           debt: utils.parseUnits('1', 18).mul(-1),
         },
         price: utils.parseUnits('1', 18),
-        revert: 'LS',
+        revert: 'less than min debt',
       },
     ]) {
       it(name, async () => {
@@ -178,7 +186,7 @@ describe('Lender.unit', () => {
           await lender.connect(alice).update(update);
           expect(await nusd.balanceOf(alice.address)).to.equal(update.debt);
           expect(await collateral.balanceOf(lender.address)).to.equal(
-            update.coll
+            MIN_SYSTEM_COLLATERALIZATION_RATIO.add(update.coll)
           );
           const got = await lender.positionOf(alice.address);
           expect(got.coll).to.equal(update.coll);
@@ -194,28 +202,76 @@ describe('Lender.unit', () => {
       debt: utils.parseUnits('1', 18),
     };
 
-    for (const {name, update, price, revert} of [
+    for (const {name, update, want, price, revert} of [
       {
         name: 'with additonal collateral succeeds',
         update: {
           coll: utils.parseUnits('10', 18),
           debt: constants.Zero,
         },
+        want: {
+          coll: open.coll.add(utils.parseUnits('10', 18)),
+          debt: open.debt,
+        },
         price: utils.parseUnits('1', 18),
       },
       {
         name: 'with additonal collateral when price has dropped succeeds',
         update: {
-          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+          coll: open.coll,
           debt: constants.Zero,
+        },
+        want: {
+          coll: open.coll.add(open.coll),
+          debt: open.debt,
         },
         price: utils.parseUnits('1', 18).div(2),
       },
       {
         name: 'to repay debt and withdraw all collateral succeeds',
         update: {
-          coll: MIN_SYSTEM_COLLATERALIZATION_RATIO.mul(-1),
+          coll: open.coll.mul(-1),
           debt: utils.parseUnits('1', 18).mul(-1),
+        },
+        want: {
+          coll: BigNumber.from(0),
+          debt: BigNumber.from(0),
+        },
+        price: utils.parseUnits('1', 18),
+      },
+      {
+        name: 'to only repay necessary debt when overpaying debt',
+        update: {
+          coll: open.coll.mul(-1),
+          debt: open.debt.mul(-2),
+        },
+        want: {
+          coll: BigNumber.from(0),
+          debt: BigNumber.from(0),
+        },
+        price: utils.parseUnits('1', 18),
+      },
+      {
+        name: 'to only repay necessary coll when overpaying coll',
+        update: {
+          coll: open.coll.mul(-2),
+          debt: open.debt.mul(-1),
+        },
+        want: {
+          coll: BigNumber.from(0),
+          debt: BigNumber.from(0),
+        },
+        price: utils.parseUnits('1', 18),
+      },
+      {
+        name: 'to full repay with max',
+        update: {
+          coll: constants.MaxInt256.mul(-1),
+          debt: constants.MaxInt256.mul(-1),
+        },
+        want: {
+          coll: BigNumber.from(0),
+          debt: BigNumber.from(0),
         },
         price: utils.parseUnits('1', 18),
       },
@@ -255,20 +311,14 @@ describe('Lender.unit', () => {
           await expect(lender.connect(alice).update(update)).to.be.revertedWith(
             revert
           );
-        } else {
-          const supply = await nusd.totalSupply();
-          const balance = await collateral.balanceOf(alice.address);
+        } else if (want) {
           await lender.connect(alice).update(update);
-          expect(await nusd.balanceOf(alice.address)).to.equal(
-            open.debt.add(update.debt)
-          );
-          expect(await nusd.totalSupply()).to.equal(supply.add(update.debt));
-          expect(await collateral.balanceOf(lender.address)).to.equal(
-            open.coll.add(update.coll)
-          );
-          expect(await collateral.balanceOf(alice.address)).to.equal(
-            balance.sub(update.coll)
-          );
+          expect(await nusd.balanceOf(alice.address)).to.equal(want.debt);
+          const position = await lender.positionOf(alice.address);
+          expect(position.coll).to.equal(want.coll);
+          expect(position.debt).to.equal(want.debt);
+        } else {
+          expect(false, 'no assertions');
         }
       });
     }
@@ -380,6 +430,7 @@ describe('Lender.unit', () => {
         },
         revert: 'position has no debt',
       },
+      // That is the deployer positon reverts
     ]) {
       it(name, async () => {
         const {
@@ -415,9 +466,11 @@ describe('Lender.unit', () => {
         } else if (want) {
           await callee.connect(bob).liquidate(lender.address, alice.address);
 
-          expect(await nusd.totalSupply()).to.equal(want.nusd.supply);
+          expect(await nusd.totalSupply()).to.equal(
+            want.nusd.supply.add(MIN_DEBT)
+          );
           expect(await collateral.balanceOf(lender.address)).to.equal(
-            want.lender.coll
+            want.lender.coll.add(MIN_SYSTEM_COLLATERALIZATION_RATIO)
           );
 
           // Assert alice state

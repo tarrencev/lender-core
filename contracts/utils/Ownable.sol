@@ -6,16 +6,16 @@ contract Ownable {
     address public _owner;
     address public _pendingOwner;
 
-    constructor(address owner) {
-        _owner = owner;
+    constructor(address owner_) {
+        _owner = owner_;
     }
 
     /**
      * @notice Owner address is not updated until the new owner
      * address has called `acceptOwner()` to accept this responsibility.
      */
-    function setOwner(address owner) public onlyOwner {
-        _pendingOwner = owner;
+    function setOwner(address owner_) public onlyOwner {
+        _pendingOwner = owner_;
     }
 
     /**

@@ -37,6 +37,7 @@ interface LenderInterface extends ethers.utils.Interface {
     "_positions(address)": FunctionFragment;
     "acceptOwner()": FunctionFragment;
     "fee(uint256)": FunctionFragment;
+    "initialize(tuple)": FunctionFragment;
     "lNominal()": FunctionFragment;
     "lReal()": FunctionFragment;
     "liquidate(address,bytes)": FunctionFragment;
@@ -94,6 +95,10 @@ interface LenderInterface extends ethers.utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "fee", values: [BigNumberish]): string;
+  encodeFunctionData(
+    functionFragment: "initialize",
+    values: [{ coll: BigNumberish; debt: BigNumberish }]
+  ): string;
   encodeFunctionData(functionFragment: "lNominal", values?: undefined): string;
   encodeFunctionData(functionFragment: "lReal", values?: undefined): string;
   encodeFunctionData(
@@ -174,6 +179,7 @@ interface LenderInterface extends ethers.utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "fee", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lNominal", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "lReal", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "liquidate", data: BytesLike): Result;
@@ -292,6 +298,11 @@ export class Lender extends BaseContract {
 
     fee(ratio: BigNumberish, overrides?: CallOverrides): Promise<[BigNumber]>;
 
+    initialize(
+      u: { coll: BigNumberish; debt: BigNumberish },
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     lNominal(
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
@@ -346,7 +357,7 @@ export class Lender extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -397,6 +408,11 @@ export class Lender extends BaseContract {
   ): Promise<ContractTransaction>;
 
   fee(ratio: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
+
+  initialize(
+    u: { coll: BigNumberish; debt: BigNumberish },
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   lNominal(
     overrides?: CallOverrides
@@ -452,7 +468,7 @@ export class Lender extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setOwner(
-    owner: string,
+    owner_: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -502,6 +518,11 @@ export class Lender extends BaseContract {
 
     fee(ratio: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
+    initialize(
+      u: { coll: BigNumberish; debt: BigNumberish },
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     lNominal(
       overrides?: CallOverrides
     ): Promise<[BigNumber, BigNumber] & { coll: BigNumber; debt: BigNumber }>;
@@ -546,7 +567,7 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+    setOwner(owner_: string, overrides?: CallOverrides): Promise<void>;
 
     totalCollateralizationRatio(
       price: BigNumberish,
@@ -613,6 +634,11 @@ export class Lender extends BaseContract {
 
     fee(ratio: BigNumberish, overrides?: CallOverrides): Promise<BigNumber>;
 
+    initialize(
+      u: { coll: BigNumberish; debt: BigNumberish },
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     lNominal(overrides?: CallOverrides): Promise<BigNumber>;
 
     lReal(overrides?: CallOverrides): Promise<BigNumber>;
@@ -660,7 +686,7 @@ export class Lender extends BaseContract {
     ): Promise<BigNumber>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -718,6 +744,11 @@ export class Lender extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    initialize(
+      u: { coll: BigNumberish; debt: BigNumberish },
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     lNominal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     lReal(overrides?: CallOverrides): Promise<PopulatedTransaction>;
@@ -768,7 +799,7 @@ export class Lender extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

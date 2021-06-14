@@ -142,7 +142,7 @@ export class LenderFactory extends BaseContract {
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
   };
@@ -172,7 +172,7 @@ export class LenderFactory extends BaseContract {
   owner(overrides?: CallOverrides): Promise<string>;
 
   setOwner(
-    owner: string,
+    owner_: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -199,7 +199,7 @@ export class LenderFactory extends BaseContract {
 
     owner(overrides?: CallOverrides): Promise<string>;
 
-    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+    setOwner(owner_: string, overrides?: CallOverrides): Promise<void>;
   };
 
   filters: {};
@@ -230,7 +230,7 @@ export class LenderFactory extends BaseContract {
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
   };
@@ -261,7 +261,7 @@ export class LenderFactory extends BaseContract {
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
   };

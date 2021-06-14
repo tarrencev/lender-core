@@ -299,7 +299,7 @@ export class NUSD extends BaseContract {
     ): Promise<ContractTransaction>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -399,7 +399,7 @@ export class NUSD extends BaseContract {
   ): Promise<ContractTransaction>;
 
   setOwner(
-    owner: string,
+    owner_: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -490,7 +490,7 @@ export class NUSD extends BaseContract {
 
     revokeIssuer(issuer: string, overrides?: CallOverrides): Promise<void>;
 
-    setOwner(owner: string, overrides?: CallOverrides): Promise<void>;
+    setOwner(owner_: string, overrides?: CallOverrides): Promise<void>;
 
     symbol(overrides?: CallOverrides): Promise<string>;
 
@@ -609,7 +609,7 @@ export class NUSD extends BaseContract {
     ): Promise<BigNumber>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -716,7 +716,7 @@ export class NUSD extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     setOwner(
-      owner: string,
+      owner_: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

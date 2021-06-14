@@ -22,6 +22,7 @@ import "./libraries/LenderStable.sol";
 import "./libraries/Position.sol";
 import "./libraries/Update.sol";
 import "./libraries/SafeCast.sol";
+
 import "./utils/Ownable.sol";
 
 /// @title Collateralized lender.
@@ -97,21 +98,41 @@ contract Lender is Ownable, ReentrancyGuard {
         _minDebt = minDebt_;
         _minBCR = minBCR_;
         _minLCR = minLCR_;
+    }
 
-        lNominal.update(Update.Info(15e17, 10e17));
-        lReal.update(Update.Info(15e17, 10e17));
+    /// @notice Initialize the lender.
+    /// @param u The initialization update apply to the position. It is required to
+    ///          put the lender at the minimum lender collateralization level or above.
+    function initialize(Update.Info calldata u) public onlyOwner {
+        if (lNominal.coll > 0) {
+            return;
+        }
 
-        // _nusd.mint(msg.sender, 10e17);
-        // _collateral.safeTransferFrom(msg.sender, address(this), 15e17);
+        Position.Info storage bNominal = _positions.get(msg.sender);
+        lReal.update(u);
+        lNominal.update(u);
+        bNominal.update(u);
+
+        uint256 price = observe();
+        require(lReal.ratio(price) >= _minLCR, "init undercollateralized system");
+
+        _nusd.update(u.debt);
+        _collateral.update(u.coll);
     }
 
     /// @notice Update a position.
     /// @param uReal The real update apply to the position.
-    function update(Update.Info calldata uReal) external nonReentrant {
+    function update(Update.Info memory uReal) external initialized nonReentrant {
         require(uReal.coll != 0 || uReal.debt != 0, "noop update");
 
         Position.Info storage bNominal = _positions.get(msg.sender);
-        Update.Info memory uNominal = uReal.nominal(lReal, lNominal);
+        Update.Info memory uNominal;
+
+        // Computes the nominal update. In the event that the user overpays their debt,
+        // this function will mutate the real update (uReal) to reflect the correct
+        // debt adjustment that zeros the debt. In this case, even if a user overpays
+        // their debt we will only draw the necessary amount.
+        (uNominal, uReal) = uReal.nominal(bNominal, lReal, lNominal);
 
         lReal.update(uReal);
         lNominal.update(uNominal);
@@ -152,6 +173,12 @@ contract Lender is Ownable, ReentrancyGuard {
             require(ratio >= _minBCR, "undercollateralized borrower");
         }
 
+        // // If the system is fully withdrawn, it needs to be zero'd out such that it can be reinitialized.
+        // require(
+        //     (lNominal.coll > 0 && lNominal.debt > 0) || (lNominal.coll == 0 && lNominal.debt == 0),
+        //     "invalid liquidation"
+        // );
+
         _nusd.update(uReal.debt.sub(fee_));
         _collateral.update(uReal.coll);
 
@@ -160,7 +187,7 @@ contract Lender is Ownable, ReentrancyGuard {
 
     /// @notice Liquidate a position.
     /// @param owner The position owner.
-    function liquidate(address owner, bytes calldata data) external nonReentrant {
+    function liquidate(address owner, bytes calldata data) external initialized nonReentrant {
         Position.Info memory bNominal = _positions[owner];
         require(bNominal.debt != 0, "position has no debt");
 
@@ -174,10 +201,17 @@ contract Lender is Ownable, ReentrancyGuard {
         ILiquidateCallback(msg.sender).liquidateCallback(bReal.coll, bReal.debt, data);
 
         // We cast the positon values (uint128) to update values (int256) and negate
-        // them to subtract the values from the system.
+        // them to subtract the values from the system. This cast is safe since a uint128
+        // can not overflow a int256.
         lReal.update(Update.Info(-int256(bReal.coll), -int256(bReal.debt)));
         lNominal.update(Update.Info(-int256(bNominal.coll), -int256(bNominal.debt)));
         delete _positions[owner];
+
+        // If we fully liquidate the system, it needs to be fully zero'd out such that it can be reinitialized.
+        require(
+            (lNominal.coll > 0 && lNominal.debt > 0) || (lNominal.coll == 0 && lNominal.debt == 0),
+            "invalid liquidation"
+        );
 
         _nusd.burn(msg.sender, bReal.debt);
 
@@ -195,12 +229,17 @@ contract Lender is Ownable, ReentrancyGuard {
             return _fee;
         }
 
+        // Borrower is below the minimum borrower collateralization ratio. They
+        // own the full liquidation fee.
         int256 below = ratio.toInt256().sub(_minLCR);
         if (below <= uint256(_minBCR).toInt256().sub(_minLCR)) {
             return _fee;
         }
 
-        return (1 - (uint256(-below) / uint256(_minLCR).add(_minBCR))).mul(_fee);
+        // We compute
+        uint256 fee_ = (1 - (uint256(-below) / uint256(_minLCR).add(_minBCR))).mul(_fee);
+        assert(fee_ > 0); // Fee should never be allowed to go negative.
+        return fee_;
     }
 
     function observe() public view virtual returns (uint256) {
@@ -280,5 +319,13 @@ contract Lender is Ownable, ReentrancyGuard {
     /// @param period Oracle period.
     function setOraclePeriod(uint32 period) external onlyOwner {
         _oraclePeriod = period;
+    }
+
+    /// @notice Proceeds if the system has been initialized. Initializaion is defined
+    ///         as having a lender collateral and debt balance greater than 0. This
+    ///         is required for the lenders math to function (avoid division by zero).
+    modifier initialized {
+        require(lNominal.coll > 0 && lNominal.debt > 0, "not initialized");
+        _;
     }
 }

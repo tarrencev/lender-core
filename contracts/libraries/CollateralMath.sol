@@ -31,16 +31,16 @@ library CollateralMath {
 
     /// @notice Compute the real position of a borrower.
     /// @param pOpened The pO position to convert to real.
-    /// @param lOpened The lenders opened position.
+    /// @param lNominal The lenders opened position.
     /// @param lReal The lenders actual position.
     /// @return The borrowers real position.
     function real(
         Position.Info memory pOpened,
-        Position.Info memory lOpened,
+        Position.Info memory lNominal,
         Position.Info memory lReal
     ) internal pure returns (Position.Info memory) {
-        uint256 coll = FullMath.mulDiv(pOpened.coll, lReal.coll, lOpened.coll);
-        uint256 debt = FullMath.mulDiv(pOpened.debt, lReal.debt, lOpened.debt);
+        uint256 coll = FullMath.mulDiv(pOpened.coll, lReal.coll, lNominal.coll);
+        uint256 debt = FullMath.mulDiv(pOpened.debt, lReal.debt, lNominal.debt);
         return Position.Info(coll.toUint128(), debt.toUint128());
     }
 
