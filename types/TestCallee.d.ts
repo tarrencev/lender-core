@@ -93,7 +93,7 @@ export class TestCallee extends BaseContract {
   functions: {
     liquidate(
       lender: string,
-      owner: string,
+      borrower: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -107,7 +107,7 @@ export class TestCallee extends BaseContract {
 
   liquidate(
     lender: string,
-    owner: string,
+    borrower: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -121,7 +121,7 @@ export class TestCallee extends BaseContract {
   callStatic: {
     liquidate(
       lender: string,
-      owner: string,
+      borrower: string,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -147,7 +147,7 @@ export class TestCallee extends BaseContract {
   estimateGas: {
     liquidate(
       lender: string,
-      owner: string,
+      borrower: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -162,7 +162,7 @@ export class TestCallee extends BaseContract {
   populateTransaction: {
     liquidate(
       lender: string,
-      owner: string,
+      borrower: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -196,7 +196,7 @@ describe('Lender.unit', () => {
     }
   });
 
-  describe('updating a positon', async () => {
+  describe('updating a position', async () => {
     const open = {
       coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
       debt: utils.parseUnits('1', 18),
@@ -324,7 +324,7 @@ describe('Lender.unit', () => {
     }
   });
 
-  describe('liquidating a positon', async () => {
+  describe('liquidating a position', async () => {
     for (const {name, positions, price, want, revert} of [
       {
         name: 'that is undercollateralized succeeds',
@@ -430,7 +430,6 @@ describe('Lender.unit', () => {
         },
         revert: 'position has no debt',
       },
-      // That is the deployer positon reverts
     ]) {
       it(name, async () => {
         const {
@@ -474,52 +473,206 @@ describe('Lender.unit', () => {
           );
 
           // Assert alice state
-          let positon = await lender.positionOf(alice.address);
+          let position = await lender.positionOf(alice.address);
           expect(await nusd.balanceOf(alice.address)).to.equal(want.alice.nusd);
-          expect(positon.debt).to.equal(want.alice.debt);
-          expect(positon.coll).to.equal(want.alice.coll);
+          expect(position.debt).to.equal(want.alice.debt);
+          expect(position.coll).to.equal(want.alice.coll);
 
           // Assert bob state
-          positon = await lender.positionOf(bob.address);
+          position = await lender.positionOf(bob.address);
           expect(await nusd.balanceOf(bob.address)).to.equal(want.bob.nusd);
-          expect(positon.debt).to.equal(want.bob.debt);
-          expect(positon.coll).to.equal(want.bob.coll);
+          expect(position.debt).to.equal(want.bob.debt);
+          expect(position.coll).to.equal(want.bob.coll);
         }
       });
     }
   });
 
-  // describe("interacting with positons:", async () => {
-  //   const coll = MIN_SYSTEM_COLLATERALIZATION_RATIO;
-  //   const debt = utils.parseUnits("1", 18);
+  describe('interacting with positions', async () => {
+    it('interacting with positions', async () => {
+      const {
+        accounts: {deployer, alice, bob, carol},
+        contracts: {lender, callee, nusd},
+      } = await setup();
 
-  //   const price = utils.parseUnits("1", 18);
-  //   await collateral.connect(alice).approve(lender.address, constants.MaxUint256);
-  //   await collateral.connect(bob).approve(lender.address, constants.MaxUint256);
-  //   await collateral.connect(carol).approve(lender.address, constants.MaxUint256);
+      for (const {name, action, sender, update, want, transfer, price} of [
+        {
+          name: 'initialize price to 1.0',
+          action: 'price',
+          price: utils.parseUnits('1', 18),
+        },
+        {
+          name: 'alice opens a minimally collateralized position',
+          action: 'update',
+          sender: alice,
+          update: {
+            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+            debt: MIN_DEBT,
+          },
+          want: {
+            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO,
+            debt: MIN_DEBT,
+          },
+        },
+        {
+          name: 'bob opens a minimally collateralized position',
+          action: 'update',
+          sender: bob,
+          update: {
+            coll: utils.parseUnits('150', 18),
+            debt: utils.parseUnits('100', 18),
+          },
+          want: {
+            coll: utils.parseUnits('150', 18),
+            debt: utils.parseUnits('100', 18),
+          },
+        },
+        {
+          name: 'update price to 0.5',
+          action: 'price',
+          price: utils.parseUnits('5', 17),
+        },
+        {
+          name: 'bob updates his position to be minimally collateralized',
+          action: 'update',
+          sender: bob,
+          update: {
+            coll: utils.parseUnits('150', 18),
+            debt: constants.Zero,
+          },
+          want: {
+            coll: utils.parseUnits('300', 18),
+            debt: utils.parseUnits('100', 18),
+          },
+        },
+        {
+          name: 'carol opens a large positon',
+          action: 'update',
+          sender: carol,
+          update: {
+            coll: utils.parseUnits('150', 20),
+            debt: utils.parseUnits('100', 19),
+          },
+          want: {
+            coll: utils.parseUnits('150', 20),
+            debt: utils.parseUnits('100', 19),
+          },
+        },
+        {
+          name: 'carol liquidates alice',
+          action: 'liquidate',
+          sender: carol,
+          want: {
+            borrower: alice,
+            coll: constants.Zero,
+            debt: constants.Zero,
+          },
+        },
+        {
+          name: 'alice transfers her nusd to carol',
+          action: 'transfer',
+          transfer: {
+            from: alice,
+            to: carol,
+            amount: MIN_DEBT,
+          },
+        },
+        {
+          name: 'carol closes her position',
+          action: 'update',
+          sender: carol,
+          update: {
+            coll: utils.parseUnits('150', 20).mul(-1),
+            debt: constants.MaxInt256.mul(-1),
+          },
+          want: {
+            coll: constants.Zero,
+            debt: constants.Zero,
+          },
+        },
+        {
+          name: 'bob closes his position',
+          action: 'update',
+          sender: bob,
+          update: {
+            coll: utils.parseUnits('300', 18).mul(-1),
+            debt: utils.parseUnits('100', 18).mul(-1),
+          },
+          want: {
+            coll: constants.Zero,
+            debt: constants.Zero,
+          },
+        },
+        {
+          name: 'deployer unwinds lender',
+          action: 'update',
+          sender: deployer,
+          update: {
+            coll: MIN_SYSTEM_COLLATERALIZATION_RATIO.mul(-1),
+            debt: MIN_DEBT.mul(-1),
+          },
+          want: {
+            coll: constants.Zero,
+            debt: constants.Zero,
+          },
+        },
+      ]) {
+        console.log(`\t${name}`);
 
-  //   await oracle.set(price);
-  //   await lender.connect(alice).open(coll, debt);
+        switch (action) {
+          case 'price': {
+            if (!price) {
+              expect(price).is.not.null;
+              break;
+            }
 
-  //   for (const { name, action, sender, coll, debt, price } of [
-  //     {
-  //       name: "alice creates a position",
-  //       action: "open",
-  //       sender: alice,
-  //       coll: utils.parseUnits("10", 18),
-  //       debt: constants.Zero,
-  //       price: utils.parseUnits("1", 18),
-  //     },
-  //   ]) {
-  //     it(name, async () => {
-  //       await oracle.set(price);
-  //       switch (action) {
-  //         case "open":
-  //           break;
-  //         case "update":
-  //           break;
-  //       }
-  //     });
-  //   }
-  // });
+            await lender.setPrice(price);
+            break;
+          }
+          case 'transfer': {
+            if (!transfer) {
+              expect(transfer).is.not.null;
+              break;
+            }
+            await nusd
+              .connect(transfer.from)
+              .transfer(transfer.to.address, transfer.amount);
+            break;
+          }
+          case 'update': {
+            if (!sender || !update || !want) {
+              expect(sender).is.not.null;
+              expect(update).is.not.null;
+              expect(want).is.not.null;
+              break;
+            }
+
+            await lender.connect(sender).update(update);
+            const position = await lender.positionOf(sender.address);
+            expect(position.debt).to.equal(want.debt);
+            expect(position.coll).to.equal(want.coll);
+            break;
+          }
+          case 'liquidate': {
+            if (!sender || !want || !want.borrower) {
+              expect(sender).is.not.null;
+              expect(want).is.not.null;
+              expect(want?.borrower).is.not.null;
+              break;
+            }
+
+            const borrower = await lender.positionOf(want.borrower.address);
+            await nusd.connect(sender).transfer(callee.address, borrower.debt);
+            await callee
+              .connect(sender)
+              .liquidate(lender.address, alice.address);
+            const position = await lender.positionOf(want.borrower.address);
+            expect(position.debt).to.equal(want.debt);
+            expect(position.coll).to.equal(want.coll);
+            break;
+          }
+        }
+      }
+    });
+  });
 });

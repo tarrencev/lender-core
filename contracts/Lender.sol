@@ -154,7 +154,7 @@ contract Lender is Ownable, ReentrancyGuard {
         int256 fee_ = 0;
         if (ratio < _minLCR) {
             fee_ = fee(uint256(ratio)).toInt256();
-            bNominal.update(Update.Info(0, fee_));
+            bNominal.update(Update.Info(0, fee_)); // TODO: use real fee
             lNominal.update(Update.Info(0, fee_));
             lReal.update(Update.Info(0, fee_));
 
@@ -210,7 +210,7 @@ contract Lender is Ownable, ReentrancyGuard {
         // If we fully liquidate the system, it needs to be fully zero'd out such that it can be reinitialized.
         require(
             (lNominal.coll > 0 && lNominal.debt > 0) || (lNominal.coll == 0 && lNominal.debt == 0),
-            "invalid liquidation"
+            "invalid liquidation: system drained"
         );
 
         _nusd.burn(msg.sender, bReal.debt);
